@@ -1,0 +1,176 @@
+<h3>Tour Settings</h3>
+<div>
+    <div class="gtour-table">
+        <!-- <div>
+            <td colspan="2" style="text-align:right">
+                <label class="lui-checkbox">
+                    <input class="lui-checkbox__input" type="checkbox" aria-label="Label" />
+                    <div class="lui-checkbox__check-wrap">
+                        <span class="lui-checkbox__check"></span>
+                        <span class="lui-checkbox__check-text">Expert mode</span>
+                    </div>
+                </label>
+            </div>
+        </div> -->
+        <div class="gtour-tr gtour-2cells">
+            <div class="gtour-td">
+                <label class="lui-label">Mode</label>
+                <select key="mode" class="lui-select">
+                    <option value="click" selected>Click to run tour</option>
+                    <option value="auto-always">Auto-launch tour (always)</option>
+                    <option value="hover">Hover mouse over objects &#x2605;</option>
+                    <option value="auto-once">Auto-launch tour once &#x2605;</option>
+                    <!-- <option value="auto-once-p-obj">Auto-launch tooltips once &#x2605;</option> -->
+                </select>
+            </div>
+        </div>
+        <div class="gtour-tr gtour-2cells">
+            <div class="gtour-td">
+                <label class="lui-label">
+                    Auto-launch condition {{autoLaunchCond?}}
+                </label>
+                <input key="autoLaunchCond" class="lui-input  can-be-formula" />
+            </div>
+            <div class="gtour-td">
+                <label class="lui-label">
+                    Relaunch After (auto-launch) {{relaunchAfter?}}
+                </label>
+                <input key="relaunchAfter" class="lui-input  can-be-formula" />
+            </div>
+        </div>
+        <div class="gtour-tr gtour-2cells">
+            &nbsp;
+        </div>
+        <!-- <div class="gtour-tr gtour-2cells">
+            <div class="gtour-td">
+                <label class="lui-checkbox" style="padding-bottom:10px;">
+                    <input class="lui-checkbox__input" type="checkbox" aria-label="Label" key="lookupDataModel" />
+                    <div class="lui-checkbox__check-wrap">
+                        <span class="lui-checkbox__check"></span>
+                        <span class="lui-checkbox__check-text">Lookup texts in data model {{lookupDataModel?}}</span>
+                    </div>
+                </label>
+            </div>
+            <div class="gtour-td">
+            </div>
+        </div> -->
+        <!-- <div class="gtour-tr gtour-2cells">
+            <div class="gtour-td">
+                <label class="lui-label">Field with Id {{fieldWithId?}}</label>
+                <input key="fieldWithId" class="lui-input" />
+            </div>
+            <div class="gtour-td">
+                <label class="lui-label">Text field</label>
+                <input key="fieldWithText" class="lui-input  can-be-formula" />
+            </div>
+        </div> -->
+        <!-- <div class="gtour-tr gtour-2cells">
+            <div class="gtour-td">
+                <label class="lui-checkbox" style="padding-bottom:10px;">
+                    <input class="lui-checkbox__input" type="checkbox" aria-label="Label" key="languageAsRow" />
+                    <div class="lui-checkbox__check-wrap">
+                        <span class="lui-checkbox__check"></span>
+                        <span class="lui-checkbox__check-text">Language as Row {{languageAsRow?}}</span>
+                    </div>
+                </label>
+            </div>
+            <div class="gtour-td">
+                <label class="lui-label">Language field</label>
+                <input key="fieldWithLanguage" class="lui-input" />
+            </div>
+        </div> -->
+    </div>
+</div>
+<h3>Default Tooltip Styling</h3>
+<div>
+    <div class="gtour-table">
+        <div class="gtour-tr gtour-2cells">
+            <div class="gtour-td">
+                <label class="lui-label">Font Size</label>
+                <!-- <input key="fontsize" class="lui-input" /> -->
+                <select key="fontsize" class="lui-select">
+                    <option value="smaller">smaller</option>
+                    <option value="small">small</option>
+                    <option value="medium" selected>medium</option>
+                    <option value="larger">larger</option>
+                    <option value="large">large</option>
+                </select>
+            </div>
+
+            <div class="gtour-td">
+                <label class="lui-label">Background-color</label>
+                <div class="lui-input-group">
+                    <input key="bgcolor" class="lui-input-group__item  lui-input-group__input  lui-input"
+                        id="inp-bgcolor" style="z-index:auto;" />
+                    <button class="lui-input-group__item  lui-input-group__button  lui-button" id="btn-bgcolor">
+                        <span class="lui-button__icon  lui-icon  lui-icon--effects"></span>
+                    </button>
+                    <div id="bgcolor-picker" style="position:absolute;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="gtour-tr gtour-2cells">
+            <div class="gtour-td">
+                <label class="lui-label">Default Width (px)</label>
+                <input key="width" type="number" class="lui-input" />
+            </div>
+
+            <div class="gtour-td">
+                <label class="lui-label">Font color</label>
+                <div class="lui-input-group">
+                    <input key="fontcolor" class="lui-input-group__item  lui-input-group__input  lui-input"
+                        id="inp-fontcolor" style="z-index:auto;" />
+                    <button class="lui-input-group__item  lui-input-group__button  lui-button" id="btn-fontcolor">
+                        <span class="lui-button__icon  lui-icon  lui-icon--effects"></span>
+                    </button>
+                    <div id="fontcolor-picker" style="position:absolute;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="gtour-tr gtour-2cells">
+            <div class="gtour-td">
+                <label class="lui-label">Arrowhead Size (px)</label>
+                <input key="arrowHead" type="number" class="lui-input" />
+            </div>
+            <div class="gtour-td">
+                <label class="lui-label">Button border color</label>
+                <div class="lui-input-group">
+                    <input key="bordercolor" class="lui-input-group__item  lui-input-group__input  lui-input"
+                        id="inp-bordercolor" style="z-index:auto;" />
+                    <button class="lui-input-group__item  lui-input-group__button  lui-button" id="btn-bordercolor">
+                        <span class="lui-button__icon  lui-icon  lui-icon--effects"></span>
+                    </button>
+                    <div id="bordercolor-picker" style="position:absolute;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="gtour-tr gtour-2cells">
+            <div class="gtour-td">
+                <label class="lui-label">Opacity (0..1)</label>
+                <input key="opacity" type="number" class="lui-input" />
+            </div>
+
+        </div>
+        <div class="gtour-tr gtour-2cells">
+            <div class="gtour-td">
+                <label class="lui-label">Next Button Label</label>
+                <input key="btnLabelNext" class="lui-input  can-be-formula" />
+            </div>
+            <div class="gtour-td">
+                <label class="lui-label">Done Button Label</label>
+                <input key="btnLabelDone" class="lui-input  can-be-formula" />
+            </div>
+        </div>
+    </div>
+</div>
+<h3>Info about Tour Editor</h3>
+<div>
+    <div class="gtour-table">
+        <div class="gtour-tr gtour-1cell">
+            <div class="gtour-td" style="font-weight:bold;">This editor is opened from location</div>
+        </div>
+        <div class="gtour-tr gtour-1cell" style="word-break: break-all;">
+            <div class="gtour-td" id="gtour-editor-info"> </div>
+        </div>
+    </div>
+</div>
