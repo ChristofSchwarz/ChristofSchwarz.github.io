@@ -3,3 +3,4 @@
  - [SaaS Readiness Configuration PDF](./SaaS%20Readiness%20Configuration%20(Qlik%20Sense).pdf)
  - [SaaS Readiness v3.0.5.qvf](./SaaS%20Readiness%20v3.0.5.qvf)
  - [Qlik Automate.pdf](./Qlik%20Automate.pdf)
+ - [Credit Lines Accumulation - handout.pdf](./Credit%20Lines%20Accumulation%20-%20handout.pdf)
