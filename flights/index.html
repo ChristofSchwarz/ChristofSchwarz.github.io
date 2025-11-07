@@ -10,8 +10,8 @@
   </head>
   <body>
     <header>
-      <h1>Boarding Pass Form Parser</h1>
-      <p>Upload a boarding pass image. We'll OCR it, pre-fill the form, and you can edit before submitting to Google Sheets.</p>
+      <h1>Flight Data Recording</h1>
+      <p>Upload a boarding pass image.You can edit before submitting data to Google Sheets.</p>
     </header>
 
     <main>
@@ -40,18 +40,18 @@
             </label>
             <label>
               Airline / Operator
-              <input name="airline" id="airline" type="text" placeholder="e.g., Delta" />
+              <input name="airline" id="airline" type="text" placeholder="e.g. Austrian" />
             </label>
             <label>
               Flight Number
-              <input name="flightNumber" id="flightNumber" type="text" placeholder="e.g., DL1234" />
+              <input name="flightNumber" id="flightNumber" type="text" placeholder="e.g. OS998" />
             </label>
             <label>
-              From (IATA)
+              From Airport
               <input name="from" id="from" type="text" placeholder="e.g. VIE" maxlength="3" list="iataList" />
             </label>
             <label>
-              To (IATA)
+              To Airport
               <input name="to" id="to" type="text" placeholder="e.g. ZRH" maxlength="3" list="iataList" />
             </label>
             <label>
@@ -64,19 +64,19 @@
             </label>
             <label>
               Booking Class
-              <input name="bookingClass" id="bookingClass" type="text" placeholder="e.g., Y, J, F" maxlength="2" />
+              <input name="bookingClass" id="bookingClass" type="text" placeholder="e.g., Y, J, F" maxlength="2" list="classList" />
             </label>
           </div>
 
           <h3>Additional Details</h3>
           <label>
             Reason for Travel
-            <input name="reason" id="reason" type="text" placeholder="e.g., Client meeting" />
+            <input name="reason" id="reason" type="text" placeholder="e.g. Sommerurlaub 2025" list="reasonList" />
           </label>
 
           <label>
             Airplane Type
-            <input name="airplaneType" id="airplaneType" type="text" placeholder="e.g., A320, B737-800 (manual)" />
+            <input name="airplaneType" id="airplaneType" type="text" placeholder="e.g. A320, B737-800 (manual)" list="airplaneList" />
           </label>
 
           <fieldset class="inline">
@@ -109,5 +109,8 @@
 
     <script type="module" src="./src/app.js"></script>
     <datalist id="iataList"></datalist>
+    <datalist id="reasonList"></datalist>
+    <datalist id="airplaneList"></datalist>
+    <datalist id="classList"></datalist>
   </body>
 </html>
