@@ -1,0 +1,42 @@
+🚀 Project Setup Instructions: Boarding Pass Form Parser
+🧰 1. Project Overview
+Create a single-page web application that:
+
+- Accepts a boarding pass image upload
+- Extracts key flight details using OCR
+- Displays a form with pre-filled and editable fields
+- Submits the final data to a Google Sheet
+
+🏗️ 2. Tech Stack
+Frontend: HTML, CSS, JavaScript (Vanilla or React)
+
+- OCR Library: Tesseract.js (client-side OCR)
+- Google Sheets API: via Google Apps Script Webhook
+- Hosting: GitHub Pages (recommended for simplicity and cost)
+
+🧪 3. Features to Implement
+📤 Image Upload + OCR
+File input for image upload (<input type="file">)
+Use Tesseract.js to extract text from the image
+
+Parse extracted text to identify:
+- Passenger Name
+- Flight Date & Time
+- From/To Airport (IATA codes)
+- Operator (Airline)
+- Flight Number
+
+📝 Form Fields
+Pre-fill extracted values into editable form fields
+
+Additional manual fields:
+
+- Reason for Travel (text)
+- Company/Private (radio buttons)
+- Comment (text)
+
+📬 Submission
+On submit, send form data to a Google Apps Script endpoint
+
+- Script writes data to a Google Sheet
+- No need to store the image or allow edits after submission

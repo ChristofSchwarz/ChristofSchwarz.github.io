@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Boarding Pass Form Parser</title>
+    <link rel="stylesheet" href="./styles.css" />
+      <!-- ZXing Browser (UMD) - use top-level UMD build so ZXingBrowser global is available -->
+      <script src="https://unpkg.com/@zxing/browser@0.1.5"></script>
+  </head>
+  <body>
+    <header>
+      <h1>Boarding Pass Form Parser</h1>
+      <p>Upload a boarding pass image. We'll OCR it, pre-fill the form, and you can edit before submitting to Google Sheets.</p>
+    </header>
+
+    <main>
+      <section class="uploader">
+        <label for="imageInput" class="btn">Choose Boarding Pass Image</label>
+        <input id="imageInput" type="file" accept="image/*" />
+        <div class="preview">
+          <img id="previewImage" alt="Preview" />
+        </div>
+        <div class="barcode-status">
+          <span id="barcodeStatus" class="status"></span>
+        </div>
+        <details class="raw-barcode">
+          <summary>Show Barcode Raw Data</summary>
+          <pre id="barcodeRaw"></pre>
+        </details>
+      </section>
+
+      <section class="form">
+        <h2>Flight Details</h2>
+        <form id="flightForm">
+          <div class="grid">
+            <label>
+              Passenger Name
+              <input name="passengerName" id="passengerName" type="text" placeholder="e.g., JANE DOE" />
+            </label>
+            <label>
+              Airline / Operator
+              <input name="airline" id="airline" type="text" placeholder="e.g., Delta" />
+            </label>
+            <label>
+              Flight Number
+              <input name="flightNumber" id="flightNumber" type="text" placeholder="e.g., DL1234" />
+            </label>
+            <label>
+              From (IATA)
+              <input name="from" id="from" type="text" placeholder="e.g. VIE" maxlength="3" list="iataList" />
+            </label>
+            <label>
+              To (IATA)
+              <input name="to" id="to" type="text" placeholder="e.g. ZRH" maxlength="3" list="iataList" />
+            </label>
+            <label>
+              Flight Date
+              <input name="date" id="date" type="date" />
+            </label>
+            <label>
+              Flight Time
+              <input name="time" id="time" type="time" />
+            </label>
+            <label>
+              Booking Class
+              <input name="bookingClass" id="bookingClass" type="text" placeholder="e.g., Y, J, F" maxlength="2" />
+            </label>
+          </div>
+
+          <h3>Additional Details</h3>
+          <label>
+            Reason for Travel
+            <input name="reason" id="reason" type="text" placeholder="e.g., Client meeting" />
+          </label>
+
+          <label>
+            Airplane Type
+            <input name="airplaneType" id="airplaneType" type="text" placeholder="e.g., A320, B737-800 (manual)" />
+          </label>
+
+          <fieldset class="inline">
+            <legend>Company or Private</legend>
+            <label class="radio">
+              <input type="radio" name="companyPrivate" value="Company" checked /> Company
+            </label>
+            <label class="radio">
+              <input type="radio" name="companyPrivate" value="Private" /> Private
+            </label>
+          </fieldset>
+
+          <label>
+            Comment
+            <input name="comment" id="comment" type="text" placeholder="Optional note" />
+          </label>
+
+          <div class="actions">
+            <button id="submitBtn" type="submit" class="btn primary">Submit to Google Sheet</button>
+            <button id="clearBtn" type="button" class="btn">Clear form</button>
+            <span id="submitStatus" class="status"></span>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <footer>
+      <small>Barcode decoding by ZXing. For best results, use a clear, well-lit photo of the boarding pass barcode.</small>
+    </footer>
+
+    <script type="module" src="./src/app.js"></script>
+    <datalist id="iataList"></datalist>
+  </body>
+</html>
