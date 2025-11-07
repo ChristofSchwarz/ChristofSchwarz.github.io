@@ -8,7 +8,9 @@ import {
   findAirportByCode,
   fetchPreviousFlightEntries,
   getFieldSuggestions,
-  getUniqueFieldValues
+  getUniqueFieldValues,
+  SHEET_ID,
+  SHEET_NAME
 } from './sheets.js';
 
 const imageInput = document.getElementById('imageInput');
@@ -30,6 +32,7 @@ let previousFlightEntries = null;
 // Form fields
 const fields = {
   passengerName: document.getElementById('passengerName'),
+  morePassengers: document.getElementById('morePassengers'),
   airline: document.getElementById('airline'),
   flightNumber: document.getElementById('flightNumber'),
   from: document.getElementById('from'),
@@ -69,6 +72,14 @@ form.addEventListener('submit', async (e) => {
   const formData = new FormData(form);
   const data = Object.fromEntries(formData.entries());
   data.companyPrivate = formData.get('companyPrivate');
+  
+  // Add origin domain for security verification
+  data.origin = window.location.hostname || window.location.origin;
+  
+  // Add Google Sheet configuration (not hardcoded in Apps Script)
+  data.sheetId = SHEET_ID;
+  data.sheetName = SHEET_NAME;
+  
   try {
     await submitFormData(data);
     submitStatus.textContent = 'Success! Data sent.';
@@ -111,7 +122,7 @@ if (iataDatalist && !iataDatalist.dataset.populated) {
 }
 
 // Validation helpers
-const REQUIRED_KEYS = ['passengerName','airline','flightNumber','from','to','date','time','bookingClass','reason'];
+const REQUIRED_KEYS = ['passengerName','airline','from','to','date','time','bookingClass','reason'];
 function isFormValid() {
   // All required fields non-empty and a companyPrivate radio chosen
   for (const k of REQUIRED_KEYS) {
@@ -193,6 +204,21 @@ function sanitizeFlightNumber(el) {
   if (clean !== el.value) el.value = clean;
 }
 
+// Format "More Passengers" field with proper + separation
+function formatMorePassengers(el) {
+  if (!el.value) return;
+  
+  // Split by various separators and rejoin with " + "
+  const names = el.value
+    .split(/[,;+&]/)  // Split by comma, semicolon, plus, or ampersand
+    .map(name => name.trim())
+    .filter(name => name.length > 0);
+  
+  if (names.length > 1) {
+    el.value = names.join('+');
+  }
+}
+
 fields.from?.addEventListener('input', () => { 
   sanitizeIATA(fields.from); 
   updateSubmitDisabled();
@@ -236,6 +262,11 @@ fields.flightNumber?.addEventListener('input', () => {
       }
     }
   }
+});
+
+// Format "More Passengers" field on blur
+fields.morePassengers?.addEventListener('blur', () => { 
+  formatMorePassengers(fields.morePassengers); 
 });
 // Automatic barcode decoding only; button removed.
 
@@ -472,14 +503,17 @@ function setupFieldSuggestions() {
   if (reasonField) {
     const reasonDatalist = document.getElementById('reasonList');
     if (reasonDatalist) {
+      // Use only the last 20 entries for reason suggestions to keep them relevant
+      const last20Entries = getLastNEntries(previousFlightEntries, 20);
+      
       // Try multiple possible column names for "reason"
       const reasonColumnNames = ['reason', 'Reason for Travel', 'reason for travel', 'Reason', 'purpose', 'Purpose', 'Zweck'];
       let reasonValues = [];
       
       for (const columnName of reasonColumnNames) {
-        reasonValues = getUniqueFieldValues(previousFlightEntries, columnName, 15);
+        reasonValues = getUniqueFieldValues(last20Entries, columnName, 15);
         if (reasonValues.length > 0) {
-          console.log(`Found ${reasonValues.length} reason values using column: "${columnName}"`);
+          console.log(`Found ${reasonValues.length} reason values from last 20 entries using column: "${columnName}"`);
           break;
         }
       }
@@ -540,6 +574,30 @@ function setupFieldSuggestions() {
       }
     }
   }
+  
+  // Create datalist for "More Passengers" field
+  const morePassengersField = fields.morePassengers;
+  if (morePassengersField) {
+    const morePassengersDatalist = document.getElementById('morePassengersList');
+    if (morePassengersDatalist) {
+      const morePassengersColumnNames = ['morePassengers', 'More Passengers', 'more passengers', 'Additional Passengers', 'Other Passengers', 'Co-Passengers'];
+      let morePassengersValues = [];
+      
+      for (const columnName of morePassengersColumnNames) {
+        morePassengersValues = getUniqueFieldValues(previousFlightEntries, columnName, 10);
+        if (morePassengersValues.length > 0) {
+          console.log(`Found ${morePassengersValues.length} more passengers values using column: "${columnName}"`);
+          break;
+        }
+      }
+      
+      populateDatalist(morePassengersDatalist, morePassengersValues);
+      
+      if (morePassengersValues.length > 0) {
+        morePassengersField.placeholder = `e.g., ${morePassengersValues[0]}`;
+      }
+    }
+  }
 }
 
 // Helper function to populate datalist with options
@@ -555,6 +613,21 @@ function populateDatalist(datalist, values) {
   });
   
   datalist.appendChild(fragment);
+}
+
+// Helper function to get the last N entries sorted by date
+function getLastNEntries(entries, n = 20) {
+  if (!entries || entries.length === 0) return [];
+  
+  // Sort by date (most recent first) if date field exists
+  const sortedEntries = [...entries].sort((a, b) => {
+    const dateA = new Date(a.timestamp || 0);
+    const dateB = new Date(b.timestamp || 0);
+    return dateB - dateA; // Most recent first
+  });
+  
+  // Return the last N entries
+  return sortedEntries.slice(-n);
 }
 
 // Auto-suggest based on passenger name

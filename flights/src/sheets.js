@@ -1,9 +1,9 @@
 // sheets.js - Google Sheets data fetching utilities
 
 // Replace with your actual Google Sheet ID and API key
-const SHEET_ID = '1v68ejIFwH8umN2WCxg0SPCLLmdSi485-K97uTFDNths';
+export const SHEET_ID = '1v68ejIFwH8umN2WCxg0SPCLLmdSi485-K97uTFDNths';
 const API_KEY = 'YOUR_GOOGLE_API_KEY_HERE'; // Optional, for quota management
-const SHEET_NAME = 'Sheet1'; // Name of the sheet tab
+export const SHEET_NAME = 'Flights'; // Name of the sheet tab
 
 /**
  * Fetch data from a public Google Sheet using the Sheets API
@@ -229,6 +229,7 @@ export function getFieldSuggestions(entries, passengerName = null) {
     airplaneType: ['airplaneType', 'Airplane Type', 'airplane type', 'Aircraft Type', 'aircraft', 'plane'],
     bookingClass: ['bookingClass', 'Booking Class', 'booking class', 'Class', 'class', 'cabin'],
     airline: ['airline', 'Airline', 'carrier', 'Carrier'],
+    morePassengers: ['morePassengers', 'More Passengers', 'more passengers', 'Additional Passengers', 'Other Passengers', 'Co-Passengers'],
     comment: ['comment', 'Comment', 'comments', 'Comments', 'notes', 'Notes', 'remarks', 'Remarks']
   };
   
