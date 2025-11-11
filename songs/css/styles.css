@@ -351,16 +351,16 @@ header h1 {
     background: #764ba2;
 }
 
-#playModeBtn {
+/* #playModeBtn {
     width: 140px;
-}
+} */
 
 /* Camera Wrapper with Overlay */
 .camera-wrapper {
     position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 200px;
+    top: 10px;
+    right: 10px;
+    width: 145px;
     z-index: 1000;
 }
 
@@ -451,16 +451,29 @@ header h1 {
         font-size: 1em;
     }
 
-    /* Song actions - smaller buttons */
+    /* Song actions - icon only on mobile */
     .song-actions {
-        padding: 0 10px;
-        gap: 8px;
+        padding: 0 5px;
+        gap: 5px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
     }
 
     .song-actions button,
     .song-actions a {
-        padding: 10px 15px;
-        font-size: 0.9em;
+        padding: 10px 12px;
+        font-size: 1.2em;
+        min-width: auto;
+        flex-shrink: 0;
+    }
+    
+    /* Hide button text on mobile, show only icons */
+    .song-actions .btn-text {
+        display: none;
+    }
+    
+    .song-actions .btn-icon {
+        display: inline;
     }
 }
 

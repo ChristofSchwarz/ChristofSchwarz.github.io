@@ -47,46 +47,49 @@ function playCountIn() {
     const beatInterval = 60000 / bpm; // 60000ms = 1 minute
     
     // Create audio context for generating tick sounds
+    // iOS requires user interaction to unlock AudioContext
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     
-    // Function to create a single tick sound
-    function playTick(time, isAccent = false) {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+    // Resume AudioContext (required for iOS)
+    audioContext.resume().then(() => {
+        // Function to create a single tick sound
+        function playTick(time, isAccent = false) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Higher pitch for accented beats (1st and 5th), all at maximum volume
+            oscillator.frequency.value = isAccent ? 1200 : 800;
+            gainNode.gain.value = 0.3;
+            
+            oscillator.start(time);
+            
+            // Quick decay for a sharp tick sound
+            oscillator.stop(time + 0.05);
+        }
         
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+        // Disable button during count-in
+        const countInBtn = document.getElementById('countInBtn');
+        countInBtn.disabled = true;
+        countInBtn.innerHTML = '<span class="btn-icon">🥁</span><span class="btn-text"> Counting...</span>';
         
-        // Higher pitch for accented beats (1st and 5th), all at maximum volume
-        oscillator.frequency.value = isAccent ? 1200 : 800;
-        gainNode.gain.value = 0.3;
+        // Schedule 8 ticks (2 bars of 4/4)
+        const startTime = audioContext.currentTime;
+        for (let i = 0; i < 8; i++) {
+            const tickTime = startTime + (i * beatInterval / 1000);
+            // Accent on beats 1 and 5 (start of each bar)
+            const isAccent = (i === 0 || i === 4);
+            playTick(tickTime, isAccent);
+        }
         
-        oscillator.start(time);
-        
-        // Quick decay for a sharp tick sound
-        // gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
-        oscillator.stop(time + 0.05);
-    }
-    
-    // Disable button during count-in
-    const countInBtn = document.getElementById('countInBtn');
-    countInBtn.disabled = true;
-    countInBtn.textContent = '🥁 Counting...';
-    
-    // Schedule 8 ticks (2 bars of 4/4)
-    const startTime = audioContext.currentTime;
-    for (let i = 0; i < 8; i++) {
-        const tickTime = startTime + (i * beatInterval / 1000);
-        // Accent on beats 1 and 5 (start of each bar)
-        const isAccent = (i === 0 || i === 4);
-        playTick(tickTime, isAccent);
-    }
-    
-    // Re-enable button after count-in completes
-    setTimeout(() => {
-        countInBtn.disabled = false;
-        countInBtn.textContent = '🥁 Count In';
-    }, beatInterval * 8 + 100);
+        // Re-enable button after count-in completes
+        setTimeout(() => {
+            countInBtn.disabled = false;
+            countInBtn.innerHTML = '<span class="btn-icon">🥁</span><span class="btn-text"> Count In</span>';
+        }, beatInterval * 8 + 100);
+    });
 }
 
 function loadSong() {
@@ -309,10 +312,12 @@ async function startGesture() {
         gestureEnabled = true;
         
         document.getElementById('gestureStatus').textContent = 'Active';
-        document.getElementById('playModeBtn').textContent = '⏸ Stop';
+        document.getElementById('playModeBtn').innerHTML = '<span class="btn-icon">⏸</span><span class="btn-text"> Stop</span>';
         
     } catch (error) {
-        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        // Detect actual Safari browser (not Chrome/Edge on iOS which also use WebKit)
+        const ua = navigator.userAgent;
+        const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|Chromium|Edg/.test(ua);
         const errorMsg = isSafari 
             ? 'Safari detected: Gesture control is not supported on Safari.\n\nPlease use Chrome, Edge, or Firefox for gesture control functionality.'
             : 'Error accessing camera: ' + error.message;
@@ -441,5 +446,5 @@ function stopGesture() {
         faceMesh = null;
     }
     
-    document.getElementById('playModeBtn').textContent = '🎤 Play Mode';
+    document.getElementById('playModeBtn').innerHTML = '<span class="btn-icon">🎤</span><span class="btn-text"> Play Mode</span>';
 }
