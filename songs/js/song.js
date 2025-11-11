@@ -5,6 +5,8 @@ let camera = null;
 let gestureEnabled = false;
 let lastHeadPosition = null;
 let scrollAmount = 0;
+let currentScrollDirection = 0; // -1 for down, 1 for up, 0 for none
+let scrollAnimationId = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -321,6 +323,7 @@ async function startGesture() {
 
 function onFaceResults(results) {
     if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
+        currentScrollDirection = 0;
         return;
     }
     
@@ -339,14 +342,41 @@ function onFaceResults(results) {
     // Detect head turn - LEFT = DOWN, RIGHT = UP (reversed)
     // Increased thresholds from 0.15 to 0.25 for less sensitivity
     if (rotationRatio < -0.25) {
-        scrollDown();
+        currentScrollDirection = -1; // Down
         document.getElementById('gestureStatus').textContent = '⬇️ Down';
+        startContinuousScroll();
     } else if (rotationRatio > 0.25) {
-        scrollUp();
+        currentScrollDirection = 1; // Up
         document.getElementById('gestureStatus').textContent = '⬆️ Up';
+        startContinuousScroll();
     } else {
+        currentScrollDirection = 0; // Stop
         document.getElementById('gestureStatus').textContent = 'Active';
     }
+}
+
+function startContinuousScroll() {
+    if (scrollAnimationId !== null) return; // Already scrolling
+    
+    function scroll() {
+        if (currentScrollDirection === 0 || !gestureEnabled) {
+            scrollAnimationId = null;
+            return;
+        }
+        
+        const container = document.querySelector('.lyrics-container-fullwidth');
+        if (container) {
+            if (currentScrollDirection === -1) {
+                container.scrollTop += 3; // Smooth continuous scrolling
+            } else if (currentScrollDirection === 1) {
+                container.scrollTop -= 3; // Smooth continuous scrolling
+            }
+        }
+        
+        scrollAnimationId = requestAnimationFrame(scroll);
+    }
+    
+    scrollAnimationId = requestAnimationFrame(scroll);
 }
 
 function scrollDown() {
@@ -365,6 +395,13 @@ function scrollUp() {
 
 function stopGesture() {
     gestureEnabled = false;
+    currentScrollDirection = 0;
+    
+    // Cancel any ongoing scroll animation
+    if (scrollAnimationId !== null) {
+        cancelAnimationFrame(scrollAnimationId);
+        scrollAnimationId = null;
+    }
     
     // Stop camera
     const videoElement = document.getElementById('cameraFeed');
