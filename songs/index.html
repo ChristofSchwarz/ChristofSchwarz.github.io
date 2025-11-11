@@ -15,18 +15,18 @@
         </header>
 
         <div id="menuPanel" class="menu-panel" style="display:none">
-            <button id="refreshBtn" class="upload-label" style="margin-bottom: 15px;">
-                🔄 Refresh from Google Sheets
-            </button>
-            <br>
-            <a href="https://drive.google.com/drive/folders/1Dg1W2ZrmSwHXP2BnZypiZ73xz0Iy9NGu" target="_blank" class="upload-label" style="margin-bottom: 15px; text-decoration: none; display: inline-block;">
-                📂 Open Google Drive Folder
-            </a>
-            <br>
-            <label for="excelUpload" class="upload-label">
-                📁 Load Local File (Excel/CSV)
-                <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv" style="display:none">
-            </label>
+            <div class="menu-items">
+                <button id="refreshBtn" class="upload-label">
+                    🔄 Refresh from Google Sheets
+                </button>
+                <a id="driveFolderLink" target="_blank" class="upload-label" style="text-decoration: none;">
+                    📂 Open Google Drive Folder
+                </a>
+                <label for="excelUpload" class="upload-label">
+                    📁 Load Local File (Excel/CSV)
+                    <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv" style="display:none">
+                </label>
+            </div>
             <div style="margin-top: 15px;">
                 <span id="fileStatus"></span>
             </div>

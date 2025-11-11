@@ -1,15 +1,32 @@
 // Global state
 let songsData = [];
 let allSongs = [];
-
-// Google Sheets configuration
-const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1nJVZRkxuoC8G8dklkVRlNb9aIIYBG-l-Nl-LaGh5MwQ/export?format=csv';
+let config = {};
 
 // Initialize app
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadConfig();
     setupEventListeners();
     loadFromGoogleSheets();
 });
+
+// Load configuration from config.json
+async function loadConfig() {
+    try {
+        const response = await fetch('config.json');
+        config = await response.json();
+        
+        // Set Google Drive folder link
+        const driveFolderLink = document.getElementById('driveFolderLink');
+        if (driveFolderLink && config.googleDriveFolder) {
+            driveFolderLink.href = config.googleDriveFolder;
+        }
+    } catch (error) {
+        console.error('Error loading config:', error);
+        // Fallback to hardcoded URL if config fails
+        config.googleSheetsUrl = 'https://docs.google.com/spreadsheets/d/1nJVZRkxuoC8G8dklkVRlNb9aIIYBG-l-Nl-LaGh5MwQ/export?format=csv';
+    }
+}
 
 function setupEventListeners() {
     document.getElementById('menuBtn').addEventListener('click', toggleMenu);
@@ -106,7 +123,31 @@ function processSongsData(data) {
     localStorage.setItem('songsDataTimestamp', Date.now().toString());
     
     populateFilters();
+    restoreFilterState(); // Restore saved filter state
     filterSongs(); // Use filterSongs instead of displaySongs to apply default sorting
+}
+
+function restoreFilterState() {
+    const savedState = localStorage.getItem('filterState');
+    if (savedState) {
+        try {
+            const filterState = JSON.parse(savedState);
+            
+            // Restore all filter values (including empty strings)
+            document.getElementById('searchInput').value = filterState.searchTerm || '';
+            document.getElementById('sortBy').value = filterState.sortBy || 'artist';
+            document.getElementById('filterInterpret').value = filterState.interpret || '';
+            document.getElementById('filterFromYear').value = filterState.fromYear || '';
+            document.getElementById('filterBeforeYear').value = filterState.beforeYear || '';
+            document.getElementById('filterKey').value = filterState.key || '';
+            document.getElementById('filterInstrumental').value = filterState.instrumental || '';
+            document.getElementById('filterBpmMin').value = filterState.bpmMin || '';
+            document.getElementById('filterBpmMax').value = filterState.bpmMax || '';
+            
+        } catch (error) {
+            console.error('Error restoring filter state:', error);
+        }
+    }
 }
 
 function populateFilters() {
@@ -205,6 +246,10 @@ function clearFilters() {
     document.getElementById('filterInstrumental').value = '';
     document.getElementById('filterBpmMin').value = '';
     document.getElementById('filterBpmMax').value = '';
+    
+    // Clear saved filter state
+    localStorage.removeItem('filterState');
+    
     filterSongs();
 }
 
@@ -260,9 +305,9 @@ async function displaySongs(songs) {
             <p class="artist">${song.interpret || 'Unknown Artist'}</p>
             <div class="metadata">
                 ${song.year ? `<span class="tag">📅 ${song.year}</span>` : ''}
-                ${song.key ? `<span class="tag">🎹 ${song.key}</span>` : ''}
+                ${song.key ? `<span class="tag">🎼 ${song.key}</span>` : ''}
                 ${song.bpm ? `<span class="tag">🥁 ${song.bpm} BPM</span>` : ''}
-                ${song.instrumental == '1' ? `<span class="tag">🎼 Instrumental</span>` : ''}
+                ${song.instrumental == '1' ? `<span class="tag">🎹</span>` : ''}
             </div>
         </div>
     `).join('');
@@ -292,6 +337,21 @@ async function displaySongs(songs) {
 function openSong(index) {
     // Save selected song index
     localStorage.setItem('selectedSongIndex', index);
+    
+    // Save current filter state
+    const filterState = {
+        searchTerm: document.getElementById('searchInput').value,
+        sortBy: document.getElementById('sortBy').value,
+        interpret: document.getElementById('filterInterpret').value,
+        fromYear: document.getElementById('filterFromYear').value,
+        beforeYear: document.getElementById('filterBeforeYear').value,
+        key: document.getElementById('filterKey').value,
+        instrumental: document.getElementById('filterInstrumental').value,
+        bpmMin: document.getElementById('filterBpmMin').value,
+        bpmMax: document.getElementById('filterBpmMax').value
+    };
+    localStorage.setItem('filterState', JSON.stringify(filterState));
+    
     window.location.href = 'song.html';
 }
 
@@ -299,7 +359,8 @@ async function loadFromGoogleSheets() {
     try {
         document.getElementById('fileStatus').textContent = '⏳ Loading from Google Sheets...';
         
-        const response = await fetch(GOOGLE_SHEET_URL);
+        const googleSheetsUrl = config.googleSheetsUrl || 'https://docs.google.com/spreadsheets/d/1nJVZRkxuoC8G8dklkVRlNb9aIIYBG-l-Nl-LaGh5MwQ/export?format=csv';
+        const response = await fetch(googleSheetsUrl);
         if (!response.ok) {
             throw new Error('Failed to fetch Google Sheets data');
         }

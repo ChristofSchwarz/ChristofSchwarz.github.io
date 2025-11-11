@@ -55,14 +55,14 @@ function playCountIn() {
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
         
-        // Higher pitch and louder for accented beats (1st and 5th)
+        // Higher pitch for accented beats (1st and 5th), all at maximum volume
         oscillator.frequency.value = isAccent ? 1200 : 800;
-        gainNode.gain.value = isAccent ? 0.3 : 0.2;
+        gainNode.gain.value = 0.3;
         
         oscillator.start(time);
         
         // Quick decay for a sharp tick sound
-        gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+        // gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
         oscillator.stop(time + 0.05);
     }
     
@@ -125,16 +125,45 @@ function displaySongInfo() {
         karaokeLink.href = currentSong.karaokeLink;
         karaokeLink.style.display = 'inline-block';
     }
+    
+    // Disable Count In button if no BPM
+    const countInBtn = document.getElementById('countInBtn');
+    const bpm = parseFloat(currentSong.bpm);
+    if (!bpm || bpm <= 0) {
+        countInBtn.disabled = true;
+        countInBtn.style.opacity = '0.5';
+        countInBtn.style.cursor = 'not-allowed';
+    } else {
+        countInBtn.disabled = false;
+        countInBtn.style.opacity = '1';
+        countInBtn.style.cursor = 'pointer';
+    }
 }
 
 async function loadLyrics() {
     const lyricsContainer = document.getElementById('lyricsContent');
+    const editLink = document.getElementById('editLink');
+    
+    // Always show Edit button but make it active only for Google Docs
+    editLink.style.display = 'inline-block';
     
     if (currentSong.lyricsFile) {
         // Check if it's a Google Docs URL
         if (currentSong.lyricsFile.includes('docs.google.com/document')) {
+            // Enable Edit button for Google Docs
+            editLink.href = currentSong.lyricsFile;
+            editLink.style.opacity = '1';
+            editLink.style.cursor = 'pointer';
+            editLink.style.pointerEvents = 'auto';
+            
             await loadGoogleDocLyrics(currentSong.lyricsFile, lyricsContainer);
         } else {
+            // Disable Edit button for local files
+            editLink.removeAttribute('href');
+            editLink.style.opacity = '0.5';
+            editLink.style.cursor = 'not-allowed';
+            editLink.style.pointerEvents = 'none';
+            
             // Load local HTML file
             try {
                 const fullPath = `lyrics/${currentSong.lyricsFile}`;
@@ -158,6 +187,12 @@ async function loadLyrics() {
             }
         }
     } else {
+        // Disable Edit button when no lyrics file
+        editLink.removeAttribute('href');
+        editLink.style.opacity = '0.5';
+        editLink.style.cursor = 'not-allowed';
+        editLink.style.pointerEvents = 'none';
+        
         lyricsContainer.innerHTML = `
             <p><em>No lyrics file specified for this song.</em></p>
             <p>To add lyrics, create an HTML file in the 'lyrics' folder, or provide a Google Docs URL in your spreadsheet.</p>
@@ -225,7 +260,13 @@ async function togglePlayMode() {
 
 async function startGesture() {
     try {
-        document.getElementById('gestureIndicator').style.display = 'block';
+        // Check if running on Safari
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        
+        if (isSafari) {
+            alert('⚠️ Gesture control may not work properly on Safari.\n\nMediaPipe Face Mesh has limited Safari support. For best experience, please use:\n• Chrome\n• Edge\n• Firefox\n\nYou can still try, but functionality may be limited.');
+        }
+        
         document.getElementById('gestureStatus').textContent = 'Starting...';
         
         // Initialize MediaPipe Face Mesh
@@ -246,12 +287,13 @@ async function startGesture() {
         
         // Start camera
         const videoElement = document.getElementById('cameraFeed');
+        const cameraWrapper = document.querySelector('.camera-wrapper');
         const stream = await navigator.mediaDevices.getUserMedia({
             video: { width: 640, height: 480 }
         });
         
         videoElement.srcObject = stream;
-        videoElement.style.display = 'block';
+        cameraWrapper.style.display = 'block';
         
         camera = new Camera(videoElement, {
             onFrame: async () => {
@@ -268,7 +310,11 @@ async function startGesture() {
         document.getElementById('playModeBtn').textContent = '⏸ Stop';
         
     } catch (error) {
-        alert('Error accessing camera: ' + error.message);
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        const errorMsg = isSafari 
+            ? 'Safari detected: Gesture control is not supported on Safari.\n\nPlease use Chrome, Edge, or Firefox for gesture control functionality.'
+            : 'Error accessing camera: ' + error.message;
+        alert(errorMsg);
         stopGesture();
     }
 }
@@ -304,13 +350,17 @@ function onFaceResults(results) {
 }
 
 function scrollDown() {
-    const container = document.querySelector('.lyrics-container');
-    container.scrollTop += 9; // 3x faster scrolling
+    const container = document.querySelector('.lyrics-container-fullwidth');
+    if (container) {
+        container.scrollTop += 15; // Faster scrolling
+    }
 }
 
 function scrollUp() {
-    const container = document.querySelector('.lyrics-container');
-    container.scrollTop -= 9; // 3x faster scrolling
+    const container = document.querySelector('.lyrics-container-fullwidth');
+    if (container) {
+        container.scrollTop -= 15; // Faster scrolling
+    }
 }
 
 function stopGesture() {
@@ -318,11 +368,12 @@ function stopGesture() {
     
     // Stop camera
     const videoElement = document.getElementById('cameraFeed');
+    const cameraWrapper = document.querySelector('.camera-wrapper');
     if (videoElement.srcObject) {
         videoElement.srcObject.getTracks().forEach(track => track.stop());
         videoElement.srcObject = null;
     }
-    videoElement.style.display = 'none';
+    cameraWrapper.style.display = 'none';
     
     // Clean up
     if (camera) {
@@ -335,6 +386,5 @@ function stopGesture() {
         faceMesh = null;
     }
     
-    document.getElementById('gestureIndicator').style.display = 'none';
     document.getElementById('playModeBtn').textContent = '🎤 Play Mode';
 }
