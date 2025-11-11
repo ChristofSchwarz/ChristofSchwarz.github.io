@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSong();
     setupEventListeners();
     
+    // Prime AudioContext on any user interaction (iOS requirement)
+    document.body.addEventListener('touchstart', initAudioContext, { once: true });
+    document.body.addEventListener('click', initAudioContext, { once: true });
+    
     // Auto-start play mode after a short delay to ensure DOM is ready
     setTimeout(() => {
         startGesture();
@@ -34,8 +38,23 @@ function setupEventListeners() {
     }
 }
 
+// Global AudioContext (created once, reused - required for iOS)
+let audioContext = null;
+
+// Initialize AudioContext on first user interaction
+function initAudioContext() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    // Resume in case it's suspended (iOS requirement)
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+    return audioContext;
+}
+
 // Count-in functionality - generates and plays 8 tick sounds at song's BPM
-function playCountIn() {
+async function playCountIn() {
     const bpm = parseFloat(currentSong.bpm);
     
     if (!bpm || bpm <= 0) {
@@ -46,37 +65,37 @@ function playCountIn() {
     // Calculate the interval between beats in milliseconds
     const beatInterval = 60000 / bpm; // 60000ms = 1 minute
     
-    // Create audio context for generating tick sounds
-    // iOS requires user interaction to unlock AudioContext
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    // Initialize and resume audio context (iOS requirement)
+    const ctx = initAudioContext();
     
-    // Resume AudioContext (required for iOS)
-    audioContext.resume().then(() => {
-        // Function to create a single tick sound
-        function playTick(time, isAccent = false) {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            // Higher pitch for accented beats (1st and 5th), all at maximum volume
-            oscillator.frequency.value = isAccent ? 1200 : 800;
-            gainNode.gain.value = 0.3;
-            
-            oscillator.start(time);
-            
-            // Quick decay for a sharp tick sound
-            oscillator.stop(time + 0.05);
-        }
+    try {
+        // Ensure AudioContext is running
+        await ctx.resume();
         
         // Disable button during count-in
         const countInBtn = document.getElementById('countInBtn');
         countInBtn.disabled = true;
         countInBtn.innerHTML = '<span class="btn-icon">🥁</span><span class="btn-text"> Counting...</span>';
         
+        // Function to create a single tick sound
+        function playTick(time, isAccent = false) {
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            // Higher pitch for accented beats (1st and 5th), higher volume
+            oscillator.frequency.value = isAccent ? 1200 : 800;
+            gainNode.gain.setValueAtTime(0.5, time);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.08);
+            
+            oscillator.start(time);
+            oscillator.stop(time + 0.08);
+        }
+        
         // Schedule 8 ticks (2 bars of 4/4)
-        const startTime = audioContext.currentTime;
+        const startTime = ctx.currentTime + 0.1; // Small delay for iOS
         for (let i = 0; i < 8; i++) {
             const tickTime = startTime + (i * beatInterval / 1000);
             // Accent on beats 1 and 5 (start of each bar)
@@ -88,8 +107,15 @@ function playCountIn() {
         setTimeout(() => {
             countInBtn.disabled = false;
             countInBtn.innerHTML = '<span class="btn-icon">🥁</span><span class="btn-text"> Count In</span>';
-        }, beatInterval * 8 + 100);
-    });
+        }, beatInterval * 8 + 200);
+        
+    } catch (error) {
+        console.error('Error playing count-in:', error);
+        alert('Could not play count-in audio. Please check your device settings.');
+        const countInBtn = document.getElementById('countInBtn');
+        countInBtn.disabled = false;
+        countInBtn.innerHTML = '<span class="btn-icon">🥁</span><span class="btn-text"> Count In</span>';
+    }
 }
 
 function loadSong() {

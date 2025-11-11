@@ -299,8 +299,10 @@ async function displaySongs(songs) {
     }
     
     // First render the cards immediately
-    songList.innerHTML = songs.map((song, index) => `
-        <div class="song-card" id="song-card-${allSongs.indexOf(song)}" onclick="openSong(${allSongs.indexOf(song)})">
+    songList.innerHTML = songs.map((song, index) => {
+        const instrumentalClass = song.instrumental == '1' ? ' song-card-instrumental' : '';
+        return `
+        <div class="song-card${instrumentalClass}" id="song-card-${allSongs.indexOf(song)}" onclick="openSong(${allSongs.indexOf(song)})">
             <h3>${song.songName || 'Untitled'}</h3>
             <p class="artist">${song.interpret || 'Unknown Artist'}</p>
             <div class="metadata">
@@ -310,7 +312,7 @@ async function displaySongs(songs) {
                 ${song.instrumental == '1' ? `<span class="tag">🎹</span>` : ''}
             </div>
         </div>
-    `).join('');
+    `}).join('');
     
     // Then validate links asynchronously and add error class if needed
     songs.forEach(async (song, index) => {
