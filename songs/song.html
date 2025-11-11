@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Song View</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="song-view">
+
+
+        <!-- Song Header - Compact -->
+        <div class="song-header">
+            <h1 id="songTitle"></h1>
+            <p id="songMeta"></p>
+                    <!-- Fixed Navigation Sidebar -->
+            <nav class="sidebar-nav">
+                <button id="backBtn">← Back</button>
+                <button id="playModeBtn">🎤 Play Mode</button>
+                <a id="originalLink" target="_blank" style="display:none">🎵 Original</a>
+                <a id="karaokeLink" target="_blank" style="display:none">🎤 Karaoke</a>
+                
+                <video id="cameraFeed" autoplay playsinline style="display:none"></video>
+                <div id="gestureIndicator" class="gesture-indicator" style="display:none">
+                    <span id="gestureStatus">Active</span>
+                    <!-- <button id="stopGestureBtn">Stop</button> -->
+                </div>
+            </nav>
+        </div>
+
+        
+        <div id="lyricsContainer" class="lyrics-container">
+            <div id="lyricsContent"></div>
+        </div>
+    </div>
+
+    <script src="js/song.js"></script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+Requirements:
+
+I want my own web-based music lyrics library, 
+easy to maintain and add texts. Each song should have also
+a bunch of attributes, by which on the front page I like to 
+filter for/search:
+
+- Song Name
+- Interpret
+- Year of release
+- key
+- bpm
+- link to original song
+- link to Karaoke version
+
+That info is best maintained in a tabular format, such as xlsx.
+The song texts themselves are best in html format to allow CSS formatting
+
+I will need a fancy feature during performances, so that I enter a "play mode" in 
+the song sheet. It should get access to my notebook camera and through video stream
+analysis notice distinctive head moves, turn right is "forward scroll" in the text. 
+Song lyrics will not fit on one page at once, scrolling needs to be made, but because
+my hands are busy playing, I need a guesture control.
+
+Hosting:
+
+If the libraries (modules) do not require my own backend, I prefer hosting it on
+christofschwarz.github.io ... otherwise a Azure Webservice (serverless) is an alternative.
+Please consult me before making a decision.
+
+
+
