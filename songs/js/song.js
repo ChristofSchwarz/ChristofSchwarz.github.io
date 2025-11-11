@@ -269,7 +269,7 @@ async function startGesture() {
         const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
         
         if (isSafari) {
-            alert('⚠️ Gesture control may not work properly on Safari.\n\nMediaPipe Face Mesh has limited Safari support. For best experience, please use:\n• Chrome\n• Edge\n• Firefox\n\nYou can still try, but functionality may be limited.');
+            // alert('⚠️ Gesture control may not work properly on Safari.\n\nMediaPipe Face Mesh has limited Safari support. For best experience, please use:\n• Chrome\n• Edge\n• Firefox\n\nYou can still try, but functionality may be limited.');
         }
         
         document.getElementById('gestureStatus').textContent = 'Starting...';
@@ -446,5 +446,5 @@ function stopGesture() {
         faceMesh = null;
     }
     
-    document.getElementById('playModeBtn').innerHTML = '<span class="btn-icon">🎤</span><span class="btn-text"> Play Mode</span>';
+    document.getElementById('playModeBtn').innerHTML = '<span class="btn-icon">▶</span><span class="btn-text"> Play Mode</span>';
 }
