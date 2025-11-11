@@ -402,6 +402,8 @@ header h1 {
     max-height: 70vh;
     overflow-y: auto;
     scroll-behavior: smooth;
+    /* iOS-specific scrolling improvements */
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Mobile Optimizations */

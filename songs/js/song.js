@@ -358,18 +358,30 @@ function onFaceResults(results) {
 function startContinuousScroll() {
     if (scrollAnimationId !== null) return; // Already scrolling
     
+    const container = document.querySelector('.lyrics-container-fullwidth');
+    if (container) {
+        // Disable smooth scrolling for programmatic control (iOS compatibility)
+        container.style.scrollBehavior = 'auto';
+    }
+    
     function scroll() {
         if (currentScrollDirection === 0 || !gestureEnabled) {
             scrollAnimationId = null;
+            // Re-enable smooth scrolling when done
+            if (container) {
+                container.style.scrollBehavior = 'smooth';
+            }
             return;
         }
         
-        const container = document.querySelector('.lyrics-container-fullwidth');
         if (container) {
+            const scrollAmount = 5;
             if (currentScrollDirection === -1) {
-                container.scrollTop += 3; // Smooth continuous scrolling
+                // Scroll down
+                container.scrollTop += scrollAmount;
             } else if (currentScrollDirection === 1) {
-                container.scrollTop -= 3; // Smooth continuous scrolling
+                // Scroll up
+                container.scrollTop -= scrollAmount;
             }
         }
         
@@ -401,6 +413,12 @@ function stopGesture() {
     if (scrollAnimationId !== null) {
         cancelAnimationFrame(scrollAnimationId);
         scrollAnimationId = null;
+    }
+    
+    // Restore smooth scrolling
+    const container = document.querySelector('.lyrics-container-fullwidth');
+    if (container) {
+        container.style.scrollBehavior = 'smooth';
     }
     
     // Stop camera
