@@ -21,9 +21,22 @@ function setupEventListeners() {
     });
     document.getElementById('excelUpload').addEventListener('change', handleFileUpload);
     document.getElementById('searchInput').addEventListener('input', filterSongs);
+    document.getElementById('sortBy').addEventListener('change', filterSongs);
     document.getElementById('filterInterpret').addEventListener('change', filterSongs);
-    document.getElementById('filterYear').addEventListener('change', filterSongs);
+    document.getElementById('filterFromYear').addEventListener('change', (e) => {
+        if (e.target.value) {
+            document.getElementById('filterBeforeYear').value = '';
+        }
+        filterSongs();
+    });
+    document.getElementById('filterBeforeYear').addEventListener('change', (e) => {
+        if (e.target.value) {
+            document.getElementById('filterFromYear').value = '';
+        }
+        filterSongs();
+    });
     document.getElementById('filterKey').addEventListener('change', filterSongs);
+    document.getElementById('filterInstrumental').addEventListener('change', filterSongs);
     document.getElementById('filterBpmMin').addEventListener('input', filterSongs);
     document.getElementById('filterBpmMax').addEventListener('input', filterSongs);
     document.getElementById('clearFilters').addEventListener('click', clearFilters);
@@ -79,6 +92,7 @@ function processSongsData(data) {
             year: normalized['year'] || normalized['year of release'] || '',
             key: normalized['key'] || '',
             bpm: normalized['bpm'] || '',
+            instrumental: normalized['instrumental'] || '',
             originalLink: normalized['link to original song'] || normalized['original'] || normalized['originallink'] || '',
             karaokeLink: normalized['link to karaoke version'] || normalized['karaoke'] || normalized['karaokelink'] || '',
             lyricsFile: normalized['lyrics file'] || normalized['lyricsfile'] || normalized['file'] || ''
@@ -92,13 +106,13 @@ function processSongsData(data) {
     localStorage.setItem('songsDataTimestamp', Date.now().toString());
     
     populateFilters();
-    displaySongs(songsData);
+    filterSongs(); // Use filterSongs instead of displaySongs to apply default sorting
 }
 
 function populateFilters() {
     // Get unique values
     const interprets = [...new Set(songsData.map(s => s.interpret).filter(Boolean))].sort();
-    const years = [...new Set(songsData.map(s => s.year).filter(Boolean))].sort();
+    const years = [...new Set(songsData.map(s => s.year).filter(Boolean))].sort((a, b) => b - a);
     const keys = [...new Set(songsData.map(s => s.key).filter(Boolean))].sort();
     
     // Populate selects
@@ -108,10 +122,16 @@ function populateFilters() {
         interpretSelect.innerHTML += `<option value="${interpret}">${interpret}</option>`;
     });
     
-    const yearSelect = document.getElementById('filterYear');
-    yearSelect.innerHTML = '<option value="">All Years</option>';
+    const fromYearSelect = document.getElementById('filterFromYear');
+    fromYearSelect.innerHTML = '<option value="">From Year</option>';
     years.forEach(year => {
-        yearSelect.innerHTML += `<option value="${year}">${year}</option>`;
+        fromYearSelect.innerHTML += `<option value="${year}">${year}</option>`;
+    });
+    
+    const beforeYearSelect = document.getElementById('filterBeforeYear');
+    beforeYearSelect.innerHTML = '<option value="">Before Year</option>';
+    years.forEach(year => {
+        beforeYearSelect.innerHTML += `<option value="${year}">${year}</option>`;
     });
     
     const keySelect = document.getElementById('filterKey');
@@ -123,9 +143,12 @@ function populateFilters() {
 
 function filterSongs() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const sortBy = document.getElementById('sortBy').value;
     const filterInterpret = document.getElementById('filterInterpret').value;
-    const filterYear = document.getElementById('filterYear').value;
+    const filterFromYear = document.getElementById('filterFromYear').value;
+    const filterBeforeYear = document.getElementById('filterBeforeYear').value;
     const filterKey = document.getElementById('filterKey').value;
+    const filterInstrumental = document.getElementById('filterInstrumental').value;
     const filterBpmMin = document.getElementById('filterBpmMin').value;
     const filterBpmMax = document.getElementById('filterBpmMax').value;
     
@@ -138,18 +161,36 @@ function filterSongs() {
         // Interpret filter
         const matchesInterpret = !filterInterpret || song.interpret === filterInterpret;
         
-        // Year filter
-        const matchesYear = !filterYear || song.year == filterYear;
+        // Year filter - either From Year (>=) or Before Year (<=)
+        const songYear = parseInt(song.year);
+        const matchesYear = (!filterFromYear || songYear >= parseInt(filterFromYear)) &&
+                           (!filterBeforeYear || songYear <= parseInt(filterBeforeYear));
         
         // Key filter
         const matchesKey = !filterKey || song.key === filterKey;
+        
+        // Instrumental filter
+        const matchesInstrumental = !filterInstrumental || song.instrumental == filterInstrumental;
         
         // BPM filter
         const bpm = parseFloat(song.bpm);
         const matchesBpmMin = !filterBpmMin || (bpm >= parseFloat(filterBpmMin));
         const matchesBpmMax = !filterBpmMax || (bpm <= parseFloat(filterBpmMax));
         
-        return matchesSearch && matchesInterpret && matchesYear && matchesKey && matchesBpmMin && matchesBpmMax;
+        return matchesSearch && matchesInterpret && matchesYear && matchesKey && matchesInstrumental && matchesBpmMin && matchesBpmMax;
+    });
+    
+    // Sort the filtered results
+    filtered.sort((a, b) => {
+        if (sortBy === 'artist') {
+            // Sort by Artist, then Song title
+            const artistCompare = (a.interpret || '').localeCompare(b.interpret || '');
+            if (artistCompare !== 0) return artistCompare;
+            return (a.songName || '').localeCompare(b.songName || '');
+        } else {
+            // Sort by Song title only
+            return (a.songName || '').localeCompare(b.songName || '');
+        }
     });
     
     displaySongs(filtered);
@@ -158,32 +199,94 @@ function filterSongs() {
 function clearFilters() {
     document.getElementById('searchInput').value = '';
     document.getElementById('filterInterpret').value = '';
-    document.getElementById('filterYear').value = '';
+    document.getElementById('filterFromYear').value = '';
+    document.getElementById('filterBeforeYear').value = '';
     document.getElementById('filterKey').value = '';
+    document.getElementById('filterInstrumental').value = '';
     document.getElementById('filterBpmMin').value = '';
     document.getElementById('filterBpmMax').value = '';
-    displaySongs(allSongs);
+    filterSongs();
 }
 
-function displaySongs(songs) {
+// Check if a lyrics file link is valid
+async function checkLyricsLink(lyricsFile) {
+    if (!lyricsFile) {
+        return false; // No link provided
+    }
+    
+    // Check if it's a Google Doc link
+    if (lyricsFile.includes('docs.google.com')) {
+        try {
+            // For Google Docs, we'll do a HEAD request to check if it's accessible
+            const response = await fetch(lyricsFile, { 
+                method: 'HEAD',
+                mode: 'no-cors' // Google Docs won't allow CORS, but we can still detect some errors
+            });
+            // With no-cors mode, if fetch doesn't throw, the URL is probably valid
+            return true;
+        } catch (error) {
+            // If fetch throws, the URL is definitely invalid
+            return false;
+        }
+    } else {
+        // For local files, check if the file exists
+        try {
+            const response = await fetch(`lyrics/${lyricsFile}`, { method: 'HEAD' });
+            return response.ok;
+        } catch (error) {
+            return false;
+        }
+    }
+}
+
+async function displaySongs(songs) {
     const songList = document.getElementById('songList');
+    
+    // Update song counter
+    const counter = document.getElementById('songCounter');
+    if (counter) {
+        counter.textContent = `${songs.length} song${songs.length !== 1 ? 's' : ''}`;
+    }
     
     if (songs.length === 0) {
         songList.innerHTML = '<p class="empty-state">No songs found</p>';
         return;
     }
     
+    // First render the cards immediately
     songList.innerHTML = songs.map((song, index) => `
-        <div class="song-card" onclick="openSong(${allSongs.indexOf(song)})">
+        <div class="song-card" id="song-card-${allSongs.indexOf(song)}" onclick="openSong(${allSongs.indexOf(song)})">
             <h3>${song.songName || 'Untitled'}</h3>
             <p class="artist">${song.interpret || 'Unknown Artist'}</p>
             <div class="metadata">
                 ${song.year ? `<span class="tag">📅 ${song.year}</span>` : ''}
                 ${song.key ? `<span class="tag">🎹 ${song.key}</span>` : ''}
                 ${song.bpm ? `<span class="tag">🥁 ${song.bpm} BPM</span>` : ''}
+                ${song.instrumental == '1' ? `<span class="tag">🎼 Instrumental</span>` : ''}
             </div>
         </div>
     `).join('');
+    
+    // Then validate links asynchronously and add error class if needed
+    songs.forEach(async (song, index) => {
+        const cardId = `song-card-${allSongs.indexOf(song)}`;
+        const card = document.getElementById(cardId);
+        
+        // Skip validation for instrumental songs (they don't need lyrics)
+        if (song.instrumental == '1') {
+            return;
+        }
+        
+        if (card && song.lyricsFile) {
+            const isValid = await checkLyricsLink(song.lyricsFile);
+            if (!isValid) {
+                card.classList.add('song-card-error');
+            }
+        } else if (card && !song.lyricsFile) {
+            // If there's no lyrics file at all, mark as error
+            card.classList.add('song-card-error');
+        }
+    });
 }
 
 function openSong(index) {

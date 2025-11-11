@@ -19,6 +19,10 @@
                 🔄 Refresh from Google Sheets
             </button>
             <br>
+            <a href="https://drive.google.com/drive/folders/1Dg1W2ZrmSwHXP2BnZypiZ73xz0Iy9NGu" target="_blank" class="upload-label" style="margin-bottom: 15px; text-decoration: none; display: inline-block;">
+                📂 Open Google Drive Folder
+            </a>
+            <br>
             <label for="excelUpload" class="upload-label">
                 📁 Load Local File (Excel/CSV)
                 <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv" style="display:none">
@@ -31,19 +35,35 @@
         <div class="controls">
             <div class="search-section">
                 <input type="text" id="searchInput" placeholder="Search songs or artists...">
+                <div id="songCounter" class="song-counter">0 songs</div>
             </div>
             
             <div class="filter-section">
+                <select id="sortBy">
+                    <option value="song">Sort by Song</option>
+                    <option value="artist" selected>Sort by Artist</option>
+                </select>
+                
                 <select id="filterInterpret">
                     <option value="">All Artists</option>
                 </select>
                 
-                <select id="filterYear">
-                    <option value="">All Years</option>
+                <select id="filterFromYear">
+                    <option value="">From Year</option>
+                </select>
+                
+                <select id="filterBeforeYear">
+                    <option value="">Before Year</option>
                 </select>
                 
                 <select id="filterKey">
                     <option value="">All Keys</option>
+                </select>
+                
+                <select id="filterInstrumental">
+                    <option value="">All Songs</option>
+                    <option value="1">Instrumental</option>
+                    <option value="0">With Vocals</option>
                 </select>
                 
                 <input type="number" id="filterBpmMin" placeholder="Min BPM">

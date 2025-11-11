@@ -23,12 +23,68 @@ function setupEventListeners() {
     });
     
     document.getElementById('playModeBtn').addEventListener('click', togglePlayMode);
+    document.getElementById('countInBtn').addEventListener('click', playCountIn);
     
     // Only add stopGestureBtn listener if it exists
     const stopBtn = document.getElementById('stopGestureBtn');
     if (stopBtn) {
         stopBtn.addEventListener('click', stopGesture);
     }
+}
+
+// Count-in functionality - generates and plays 8 tick sounds at song's BPM
+function playCountIn() {
+    const bpm = parseFloat(currentSong.bpm);
+    
+    if (!bpm || bpm <= 0) {
+        alert('BPM not specified for this song');
+        return;
+    }
+    
+    // Calculate the interval between beats in milliseconds
+    const beatInterval = 60000 / bpm; // 60000ms = 1 minute
+    
+    // Create audio context for generating tick sounds
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Function to create a single tick sound
+    function playTick(time, isAccent = false) {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Higher pitch and louder for accented beats (1st and 5th)
+        oscillator.frequency.value = isAccent ? 1200 : 800;
+        gainNode.gain.value = isAccent ? 0.3 : 0.2;
+        
+        oscillator.start(time);
+        
+        // Quick decay for a sharp tick sound
+        gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+        oscillator.stop(time + 0.05);
+    }
+    
+    // Disable button during count-in
+    const countInBtn = document.getElementById('countInBtn');
+    countInBtn.disabled = true;
+    countInBtn.textContent = '🥁 Counting...';
+    
+    // Schedule 8 ticks (2 bars of 4/4)
+    const startTime = audioContext.currentTime;
+    for (let i = 0; i < 8; i++) {
+        const tickTime = startTime + (i * beatInterval / 1000);
+        // Accent on beats 1 and 5 (start of each bar)
+        const isAccent = (i === 0 || i === 4);
+        playTick(tickTime, isAccent);
+    }
+    
+    // Re-enable button after count-in completes
+    setTimeout(() => {
+        countInBtn.disabled = false;
+        countInBtn.textContent = '🥁 Count In';
+    }, beatInterval * 8 + 100);
 }
 
 function loadSong() {
@@ -235,10 +291,11 @@ function onFaceResults(results) {
     const rotationRatio = noseOffset / faceWidth;
     
     // Detect head turn - LEFT = DOWN, RIGHT = UP (reversed)
-    if (rotationRatio < -0.15) {
+    // Increased thresholds from 0.15 to 0.25 for less sensitivity
+    if (rotationRatio < -0.25) {
         scrollDown();
         document.getElementById('gestureStatus').textContent = '⬇️ Down';
-    } else if (rotationRatio > 0.15) {
+    } else if (rotationRatio > 0.25) {
         scrollUp();
         document.getElementById('gestureStatus').textContent = '⬆️ Up';
     } else {

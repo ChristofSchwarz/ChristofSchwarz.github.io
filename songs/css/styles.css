@@ -83,10 +83,13 @@ header h1 {
 
 .search-section {
     margin-bottom: 20px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
 }
 
 #searchInput {
-    width: 100%;
+    flex: 1;
     padding: 15px;
     font-size: 1.1em;
     border: 2px solid #ddd;
@@ -98,6 +101,18 @@ header h1 {
     outline: none;
     border-color: #7e22ce;
     box-shadow: 0 0 0 3px rgba(126, 34, 206, 0.1);
+}
+
+.song-counter {
+    background: linear-gradient(135deg, #7e22ce 0%, #9333ea 100%);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: bold;
+    white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(126, 34, 206, 0.3);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .filter-section {
@@ -187,6 +202,16 @@ header h1 {
     transform: translateY(-5px);
     box-shadow: 0 15px 35px rgba(126, 34, 206, 0.3);
     border-color: rgba(126, 34, 206, 0.3);
+}
+
+.song-card-error {
+    background: linear-gradient(145deg, #fee2e2 0%, #fecaca 100%) !important;
+    border: 2px solid #ef4444 !important;
+}
+
+.song-card-error:hover {
+    box-shadow: 0 15px 35px rgba(239, 68, 68, 0.4) !important;
+    border-color: #dc2626 !important;
 }
 
 .song-card h3 {
@@ -391,8 +416,12 @@ header h1 {
     font-weight: bold;
 }
 
+#lyricsContent h1 {
+    display: none;
+}   
+
 #lyricsContent p {
-    margin: 15px 0;
+    /* margin: 15px 0; */
 }
 
 /* Responsive Design */
