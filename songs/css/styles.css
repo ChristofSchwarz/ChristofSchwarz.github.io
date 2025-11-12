@@ -418,7 +418,8 @@ header h1 {
 
 /* Mobile Optimizations */
 @media (max-width: 768px) {
-    body {
+    /* Song page specific layout - full height with flexbox */
+    body.song-page {
         padding: 5px;
         min-height: 100vh;
         height: 100vh;
@@ -427,7 +428,7 @@ header h1 {
         flex-direction: column;
     }
 
-    .container {
+    body.song-page .container {
         display: flex;
         flex-direction: column;
         height: 100%;
@@ -452,8 +453,11 @@ header h1 {
 
     /* Song title header - smaller on mobile */
     .song-title-header {
-        flex-shrink: 0;
         margin-bottom: 10px;
+    }
+
+    body.song-page .song-title-header {
+        flex-shrink: 0;
     }
 
     .song-title-header h1 {
@@ -471,8 +475,11 @@ header h1 {
         gap: 5px;
         flex-wrap: nowrap;
         overflow-x: auto;
-        flex-shrink: 0;
         margin-bottom: 10px;
+    }
+
+    body.song-page .song-actions {
+        flex-shrink: 0;
     }
 
     .song-actions button,
@@ -492,15 +499,19 @@ header h1 {
         display: inline;
     }
 
-    /* Lyrics container - full width, no margins, fills remaining space */
+    /* Lyrics container - full width, no margins */
     .lyrics-container-fullwidth {
         margin: 0;
         padding: 15px;
         border-radius: 10px;
+        overflow-y: auto;
+    }
+
+    /* Song page: lyrics fills remaining space */
+    body.song-page .lyrics-container-fullwidth {
         flex: 1;
         min-height: 0;
         max-height: none;
-        overflow-y: auto;
     }
 
     #lyricsContent {
