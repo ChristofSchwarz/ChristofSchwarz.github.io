@@ -97,7 +97,12 @@
             <input type="number" id="bpmInput" value="120" min="40" max="240">
         </div>
         
-        <button id="playBtn">▶️ Play Count-in (Tone.js)</button>
+        <div class="input-group">
+            <label for="beatsInput">Beats per Bar (Time Signature)</label>
+            <input type="number" id="beatsInput" value="4" min="2" max="12">
+        </div>
+        
+        <button id="playBtn">▶️ Play Count-in</button>
         
         <button id="playWavBtn" style="margin-top: 15px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
             🔊 Play WAV Sound
@@ -106,10 +111,11 @@
         <div class="status" id="status"></div>
         
         <div class="info">
-            <strong>Tone.js:</strong> Plays 8 tick sounds (2 bars of 4/4 time).<br>
-            Beats 1 and 5 will be accented with a higher pitch.<br><br>
-            <strong>WAV Test2:</strong> Plays a simple beep from a data URI.<br>
-            This helps determine if the issue is with Tone.js or iOS audio in general.
+            <strong>Count-in:</strong> Plays 2 bars of count-in.<br>
+            • Enter BPM (tempo) and beats per bar (time signature)<br>
+            • The first tick of each bar will be accented with a higher pitch<br>
+            • Example: 4/4 time plays 8 ticks (4 + 4), 3/4 time plays 6 ticks (3 + 3)<br><br>
+            <strong>WAV Test:</strong> Tests external audio file playback.
         </div>
     </div>
 
@@ -212,9 +218,15 @@
 
         async function playCountIn() {
             const bpm = parseInt(document.getElementById('bpmInput').value);
+            const beatsPerBar = parseInt(document.getElementById('beatsInput').value);
             
             if (!bpm || bpm < 40 || bpm > 240) {
                 document.getElementById('status').textContent = '⚠️ Please enter a valid BPM (40-240)';
+                return;
+            }
+            
+            if (!beatsPerBar || beatsPerBar < 2 || beatsPerBar > 12) {
+                document.getElementById('status').textContent = '⚠️ Please enter valid beats per bar (2-12)';
                 return;
             }
 
@@ -226,15 +238,21 @@
             document.getElementById('status').textContent = '🎵 Generating count-in...';
 
             try {
-                // Calculate beat interval in milliseconds
-                const beatInterval = (60 / bpm) * 1000;
-
-                // Play 8 ticks using generated WAV files
-                let currentBeat = 0;
+                // Calculate interval between each tick (subdivision of the beat)
+                const beatDuration = (60 / bpm) * 1000; // Duration of one beat in ms
+                const tickInterval = beatDuration / beatsPerBar; // Time between ticks
                 
-                function playNextBeat() {
-                    if (currentBeat >= 8) {
-                        // All beats done
+                // Total ticks: 2 bars × beatsPerBar
+                const totalTicks = beatsPerBar * 2;
+                let currentTick = 0;
+                
+                // Pre-generate audio files for better timing
+                const accentBlob = createWavBlob(1200, 0.08);
+                const regularBlob = createWavBlob(800, 0.08);
+                
+                function playNextTick() {
+                    if (currentTick >= totalTicks) {
+                        // All ticks done
                         isPlaying = false;
                         playBtn.disabled = false;
                         document.getElementById('status').textContent = '✅ Count-in complete!';
@@ -245,14 +263,14 @@
                         return;
                     }
                     
-                    const isAccent = (currentBeat === 0 || currentBeat === 4);
-                    const frequency = isAccent ? 1200 : 800; // Higher pitch for accents
-                    const duration = 0.08; // 80ms tick sound
+                    // First tick of each bar is accented (tick 0 and tick beatsPerBar)
+                    const isAccent = (currentTick % beatsPerBar === 0);
+                    const frequency = isAccent ? 1200 : 800;
                     
-                    console.log(`Playing beat ${currentBeat + 1}: ${frequency}Hz`);
+                    console.log(`Playing tick ${currentTick + 1}/${totalTicks}: ${frequency}Hz (${isAccent ? 'ACCENT' : 'regular'})`);
                     
-                    // Generate WAV file for this tick
-                    const wavBlob = createWavBlob(frequency, duration);
+                    // Use pre-generated WAV
+                    const wavBlob = isAccent ? accentBlob : regularBlob;
                     const wavUrl = URL.createObjectURL(wavBlob);
                     
                     // Play it using HTML5 Audio
@@ -260,9 +278,9 @@
                     audio.volume = 1.0;
                     
                     audio.play().then(() => {
-                        console.log(`Beat ${currentBeat + 1} playing`);
+                        console.log(`Tick ${currentTick + 1} started`);
                     }).catch((error) => {
-                        console.error(`Error playing beat ${currentBeat + 1}:`, error);
+                        console.error(`Error playing tick ${currentTick + 1}:`, error);
                     });
                     
                     // Clean up the URL after playing
@@ -270,16 +288,17 @@
                         URL.revokeObjectURL(wavUrl);
                     });
                     
-                    currentBeat++;
+                    currentTick++;
                     
-                    if (currentBeat === 1) {
-                        document.getElementById('status').textContent = '🥁 Count-in playing...';
+                    if (currentTick === 1) {
+                        document.getElementById('status').textContent = `🥁 Count-in (${beatsPerBar}/4 time)...`;
                     }
                     
-                    setTimeout(playNextBeat, beatInterval);
+                    // Schedule next tick
+                    setTimeout(playNextTick, tickInterval);
                 }
                 
-                playNextBeat();
+                playNextTick();
 
             } catch (error) {
                 console.error('Error playing count-in:', error);
