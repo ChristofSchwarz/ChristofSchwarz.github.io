@@ -53,13 +53,13 @@
                     <option value="">👥 All Artists</option>
                 </select>
                 
-                <select id="filterFromYear">
-                    <option value="">📅 From Year</option>
-                </select>
-                
-                <select id="filterBeforeYear">
-                    <option value="">📅 Before Year</option>
-                </select>
+                <div class="range-slider-container">
+                    <label>📅 Year: <span id="yearRangeLabel">-</span></label>
+                    <div class="range-slider-wrapper">
+                        <input type="range" id="yearMin" min="1900" max="2100" value="1900" class="range-slider">
+                        <input type="range" id="yearMax" min="1900" max="2100" value="2100" class="range-slider">
+                    </div>
+                </div>
                 
                 <select id="filterKey">
                     <option value="">🎼 All Keys</option>
@@ -71,8 +71,13 @@
                     <option value="0">🎤With Vocals</option>
                 </select>
                 
-                <input type="number" id="filterBpmMin" placeholder="🥁Min bpm">
-                <input type="number" id="filterBpmMax" placeholder="🥁Max bpm">
+                <div class="range-slider-container">
+                    <label>🥁 BPM: <span id="bpmRangeLabel">-</span></label>
+                    <div class="range-slider-wrapper">
+                        <input type="range" id="bpmMin" min="40" max="240" value="40" class="range-slider">
+                        <input type="range" id="bpmMax" min="40" max="240" value="240" class="range-slider">
+                    </div>
+                </div>
                 
                 <button id="clearFilters">Clear Filters</button>
             </div>

@@ -48,23 +48,63 @@ function setupEventListeners() {
     document.getElementById('searchInput').addEventListener('input', filterSongs);
     document.getElementById('sortBy').addEventListener('change', filterSongs);
     document.getElementById('filterInterpret').addEventListener('change', filterSongs);
-    document.getElementById('filterFromYear').addEventListener('change', (e) => {
-        if (e.target.value) {
-            document.getElementById('filterBeforeYear').value = '';
-        }
-        filterSongs();
-    });
-    document.getElementById('filterBeforeYear').addEventListener('change', (e) => {
-        if (e.target.value) {
-            document.getElementById('filterFromYear').value = '';
-        }
-        filterSongs();
-    });
     document.getElementById('filterKey').addEventListener('change', filterSongs);
     document.getElementById('filterInstrumental').addEventListener('change', filterSongs);
-    document.getElementById('filterBpmMin').addEventListener('input', filterSongs);
-    document.getElementById('filterBpmMax').addEventListener('input', filterSongs);
     document.getElementById('clearFilters').addEventListener('click', clearFilters);
+    
+    // Year range sliders
+    const yearMin = document.getElementById('yearMin');
+    const yearMax = document.getElementById('yearMax');
+    const yearLabel = document.getElementById('yearRangeLabel');
+    
+    yearMin.addEventListener('input', function() {
+        if (parseInt(this.value) > parseInt(yearMax.value)) {
+            this.value = yearMax.value;
+        }
+        updateYearLabel();
+        filterSongs();
+    });
+    
+    yearMax.addEventListener('input', function() {
+        if (parseInt(this.value) < parseInt(yearMin.value)) {
+            this.value = yearMin.value;
+        }
+        updateYearLabel();
+        filterSongs();
+    });
+    
+    function updateYearLabel() {
+        yearLabel.textContent = `${yearMin.value} - ${yearMax.value}`;
+    }
+    
+    // BPM range sliders
+    const bpmMin = document.getElementById('bpmMin');
+    const bpmMax = document.getElementById('bpmMax');
+    const bpmLabel = document.getElementById('bpmRangeLabel');
+    
+    bpmMin.addEventListener('input', function() {
+        if (parseInt(this.value) > parseInt(bpmMax.value)) {
+            this.value = bpmMax.value;
+        }
+        updateBpmLabel();
+        filterSongs();
+    });
+    
+    bpmMax.addEventListener('input', function() {
+        if (parseInt(this.value) < parseInt(bpmMin.value)) {
+            this.value = bpmMin.value;
+        }
+        updateBpmLabel();
+        filterSongs();
+    });
+    
+    function updateBpmLabel() {
+        bpmLabel.textContent = `${bpmMin.value} - ${bpmMax.value}`;
+    }
+    
+    // Initialize labels
+    updateYearLabel();
+    updateBpmLabel();
 }
 
 function toggleMenu() {
@@ -102,7 +142,7 @@ async function handleFileUpload(event) {
     reader.readAsArrayBuffer(file);
 }
 
-function processSongsData(data) {
+async function processSongsData(data) {
     // Map column names (case-insensitive)
     songsData = data.map(row => {
         const normalized = {};
@@ -121,11 +161,15 @@ function processSongsData(data) {
             instrumental: normalized['instrumental'] || '',
             originalLink: normalized['link to original song'] || normalized['original'] || normalized['originallink'] || '',
             karaokeLink: normalized['link to karaoke version'] || normalized['karaoke'] || normalized['karaokelink'] || '',
-            lyricsFile: normalized['lyrics file'] || normalized['lyricsfile'] || normalized['file'] || ''
+            lyricsFile: normalized['lyrics file'] || normalized['lyricsfile'] || normalized['file'] || '',
+            lyricsValid: null // Will be set during validation
         };
     });
     
     allSongs = [...songsData];
+    
+    // Validate lyrics links once on load
+    await validateAllLyrics();
     
     // Save to localStorage as cache
     localStorage.setItem('songsData', JSON.stringify(songsData));
@@ -136,22 +180,61 @@ function processSongsData(data) {
     filterSongs(); // Use filterSongs instead of displaySongs to apply default sorting
 }
 
+// Validate all lyrics links once during data load
+async function validateAllLyrics() {
+    const validationPromises = songsData.map(async (song) => {
+        // Skip validation for instrumental songs
+        if (song.instrumental == '1') {
+            song.lyricsValid = true; // Instrumental songs don't need lyrics
+            return;
+        }
+        
+        if (!song.lyricsFile) {
+            song.lyricsValid = false;
+            return;
+        }
+        
+        song.lyricsValid = await checkLyricsLink(song.lyricsFile);
+    });
+    
+    await Promise.all(validationPromises);
+}
+
 function restoreFilterState() {
     const savedState = localStorage.getItem('filterState');
     if (savedState) {
         try {
             const filterState = JSON.parse(savedState);
             
+            // Check if this is old toggle-based state - if so, ignore it
+            if (filterState.yearMode !== undefined || filterState.bpmMode !== undefined) {
+                console.log('Old filter state format detected, skipping restore');
+                localStorage.removeItem('filterState');
+                return;
+            }
+            
             // Restore all filter values (including empty strings)
             document.getElementById('searchInput').value = filterState.searchTerm || '';
             document.getElementById('sortBy').value = filterState.sortBy || 'artist';
             document.getElementById('filterInterpret').value = filterState.interpret || '';
-            document.getElementById('filterFromYear').value = filterState.fromYear || '';
-            document.getElementById('filterBeforeYear').value = filterState.beforeYear || '';
             document.getElementById('filterKey').value = filterState.key || '';
             document.getElementById('filterInstrumental').value = filterState.instrumental || '';
-            document.getElementById('filterBpmMin').value = filterState.bpmMin || '';
-            document.getElementById('filterBpmMax').value = filterState.bpmMax || '';
+            
+            // Restore year range sliders (only if values exist in saved state)
+            if (filterState.yearMin !== undefined && filterState.yearMax !== undefined) {
+                document.getElementById('yearMin').value = filterState.yearMin;
+                document.getElementById('yearMax').value = filterState.yearMax;
+                document.getElementById('yearRangeLabel').textContent = 
+                    `${filterState.yearMin} - ${filterState.yearMax}`;
+            }
+            
+            // Restore BPM range sliders (only if values exist in saved state)
+            if (filterState.bpmMin !== undefined && filterState.bpmMax !== undefined) {
+                document.getElementById('bpmMin').value = filterState.bpmMin;
+                document.getElementById('bpmMax').value = filterState.bpmMax;
+                document.getElementById('bpmRangeLabel').textContent = 
+                    `${filterState.bpmMin} - ${filterState.bpmMax}`;
+            }
             
         } catch (error) {
             console.error('Error restoring filter state:', error);
@@ -162,26 +245,69 @@ function restoreFilterState() {
 function populateFilters() {
     // Get unique values
     const interprets = [...new Set(songsData.map(s => s.interpret).filter(Boolean))].sort();
-    const years = [...new Set(songsData.map(s => s.year).filter(Boolean))].sort((a, b) => b - a);
+    const years = songsData.map(s => parseInt(s.year)).filter(y => !isNaN(y) && y > 0);
+    const bpms = songsData.map(s => parseFloat(s.bpm)).filter(b => !isNaN(b) && b > 0);
     const keys = [...new Set(songsData.map(s => s.key).filter(Boolean))].sort();
+    
+    // Set year range slider bounds
+    if (years.length > 0) {
+        const minYear = Math.min(...years);
+        const maxYear = Math.max(...years);
+        const yearMinSlider = document.getElementById('yearMin');
+        const yearMaxSlider = document.getElementById('yearMax');
+        
+        yearMinSlider.min = minYear;
+        yearMinSlider.max = maxYear;
+        yearMaxSlider.min = minYear;
+        yearMaxSlider.max = maxYear;
+        
+        // Set to full range initially (no filter) - but don't override if already set
+        const currentYearMin = yearMinSlider.value;
+        const currentYearMax = yearMaxSlider.value;
+        
+        // Only initialize if values are at the default HTML values (1900/2100)
+        if (currentYearMin === '1900' || currentYearMin < minYear || currentYearMin > maxYear) {
+            yearMinSlider.value = minYear;
+        }
+        if (currentYearMax === '2100' || currentYearMax < minYear || currentYearMax > maxYear) {
+            yearMaxSlider.value = maxYear;
+        }
+        
+        document.getElementById('yearRangeLabel').textContent = `${yearMinSlider.value} - ${yearMaxSlider.value}`;
+    }
+    
+    // Set BPM range slider bounds
+    if (bpms.length > 0) {
+        const minBpm = Math.floor(Math.min(...bpms));
+        const maxBpm = Math.ceil(Math.max(...bpms));
+        const bpmMinSlider = document.getElementById('bpmMin');
+        const bpmMaxSlider = document.getElementById('bpmMax');
+        
+        bpmMinSlider.min = minBpm;
+        bpmMinSlider.max = maxBpm;
+        bpmMaxSlider.min = minBpm;
+        bpmMaxSlider.max = maxBpm;
+        
+        // Set to full range initially (no filter) - but don't override if already set
+        const currentBpmMin = bpmMinSlider.value;
+        const currentBpmMax = bpmMaxSlider.value;
+        
+        // Only initialize if values are at the default HTML values (40/240)
+        if (currentBpmMin === '40' || currentBpmMin < minBpm || currentBpmMin > maxBpm) {
+            bpmMinSlider.value = minBpm;
+        }
+        if (currentBpmMax === '240' || currentBpmMax < minBpm || currentBpmMax > maxBpm) {
+            bpmMaxSlider.value = maxBpm;
+        }
+        
+        document.getElementById('bpmRangeLabel').textContent = `${bpmMinSlider.value} - ${bpmMaxSlider.value}`;
+    }
     
     // Populate selects
     const interpretSelect = document.getElementById('filterInterpret');
     interpretSelect.innerHTML = '<option value="">👥 All Artists</option>';
     interprets.forEach(interpret => {
         interpretSelect.innerHTML += `<option value="${interpret}">${interpret}</option>`;
-    });
-    
-    const fromYearSelect = document.getElementById('filterFromYear');
-    fromYearSelect.innerHTML = '<option value="">📅 From Year</option>';
-    years.forEach(year => {
-        fromYearSelect.innerHTML += `<option value="${year}">${year}</option>`;
-    });
-    
-    const beforeYearSelect = document.getElementById('filterBeforeYear');
-    beforeYearSelect.innerHTML = '<option value="">📅 Before Year</option>';
-    years.forEach(year => {
-        beforeYearSelect.innerHTML += `<option value="${year}">${year}</option>`;
     });
     
     const keySelect = document.getElementById('filterKey');
@@ -195,12 +321,12 @@ function filterSongs() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     const sortBy = document.getElementById('sortBy').value;
     const filterInterpret = document.getElementById('filterInterpret').value;
-    const filterFromYear = document.getElementById('filterFromYear').value;
-    const filterBeforeYear = document.getElementById('filterBeforeYear').value;
+    const yearMin = parseInt(document.getElementById('yearMin').value);
+    const yearMax = parseInt(document.getElementById('yearMax').value);
     const filterKey = document.getElementById('filterKey').value;
     const filterInstrumental = document.getElementById('filterInstrumental').value;
-    const filterBpmMin = document.getElementById('filterBpmMin').value;
-    const filterBpmMax = document.getElementById('filterBpmMax').value;
+    const bpmMin = parseFloat(document.getElementById('bpmMin').value);
+    const bpmMax = parseFloat(document.getElementById('bpmMax').value);
     
     let filtered = allSongs.filter(song => {
         // Search filter
@@ -211,10 +337,9 @@ function filterSongs() {
         // Interpret filter
         const matchesInterpret = !filterInterpret || song.interpret === filterInterpret;
         
-        // Year filter - either From Year (>=) or Before Year (<=)
+        // Year range filter
         const songYear = parseInt(song.year);
-        const matchesYear = (!filterFromYear || songYear >= parseInt(filterFromYear)) &&
-                           (!filterBeforeYear || songYear <= parseInt(filterBeforeYear));
+        const matchesYear = isNaN(songYear) || (songYear >= yearMin && songYear <= yearMax);
         
         // Key filter
         const matchesKey = !filterKey || song.key === filterKey;
@@ -222,12 +347,11 @@ function filterSongs() {
         // Instrumental filter
         const matchesInstrumental = !filterInstrumental || song.instrumental == filterInstrumental;
         
-        // BPM filter
-        const bpm = parseFloat(song.bpm);
-        const matchesBpmMin = !filterBpmMin || (bpm >= parseFloat(filterBpmMin));
-        const matchesBpmMax = !filterBpmMax || (bpm <= parseFloat(filterBpmMax));
+        // BPM range filter
+        const songBpm = parseFloat(song.bpm);
+        const matchesBpm = isNaN(songBpm) || (songBpm >= bpmMin && songBpm <= bpmMax);
         
-        return matchesSearch && matchesInterpret && matchesYear && matchesKey && matchesInstrumental && matchesBpmMin && matchesBpmMax;
+        return matchesSearch && matchesInterpret && matchesYear && matchesKey && matchesInstrumental && matchesBpm;
     });
     
     // Sort the filtered results
@@ -263,12 +387,22 @@ function filterSongs() {
 function clearFilters() {
     document.getElementById('searchInput').value = '';
     document.getElementById('filterInterpret').value = '';
-    document.getElementById('filterFromYear').value = '';
-    document.getElementById('filterBeforeYear').value = '';
     document.getElementById('filterKey').value = '';
     document.getElementById('filterInstrumental').value = '';
-    document.getElementById('filterBpmMin').value = '';
-    document.getElementById('filterBpmMax').value = '';
+    
+    // Reset year range sliders to full range
+    const yearMinSlider = document.getElementById('yearMin');
+    const yearMaxSlider = document.getElementById('yearMax');
+    yearMinSlider.value = yearMinSlider.min;
+    yearMaxSlider.value = yearMaxSlider.max;
+    document.getElementById('yearRangeLabel').textContent = `${yearMinSlider.value} - ${yearMaxSlider.value}`;
+    
+    // Reset BPM range sliders to full range
+    const bpmMinSlider = document.getElementById('bpmMin');
+    const bpmMaxSlider = document.getElementById('bpmMax');
+    bpmMinSlider.value = bpmMinSlider.min;
+    bpmMaxSlider.value = bpmMaxSlider.max;
+    document.getElementById('bpmRangeLabel').textContent = `${bpmMinSlider.value} - ${bpmMaxSlider.value}`;
     
     // Clear saved filter state
     localStorage.removeItem('filterState');
@@ -323,42 +457,21 @@ async function displaySongs(songs) {
         return;
     }
     
-    // First render the cards immediately
+    // Render cards using cached validation results
     songList.innerHTML = songs.map((song, index) => {
         const instrumentalClass = song.instrumental == '1' ? ' song-card-instrumental' : '';
+        const errorClass = song.lyricsValid === false ? ' song-card-error' : '';
         return `
-        <div class="song-card${instrumentalClass}" id="song-card-${allSongs.indexOf(song)}" onclick="openSong(${allSongs.indexOf(song)})">
+        <div class="song-card${instrumentalClass}${errorClass}" onclick="openSong(${allSongs.indexOf(song)})">
             <h3>${song.songName || 'Untitled'}</h3>
             <p class="artist">${song.interpret || 'Unknown Artist'}</p>
             <div class="metadata">
                 ${song.year ? `<span class="tag">📅 ${song.year}</span>` : ''}
                 ${song.key ? `<span class="tag">🎼 ${song.key}</span>` : ''}
-                ${song.bpm ? `<span class="tag">🥁 ${song.bpm} BPM</span>` : ''}
-                ${song.instrumental == '1' ? `<span class="tag">🎹</span>` : ''}
+                ${song.bpm ? `<span class="tag">🥁 ${song.bpm} bpm</span>` : ''}
             </div>
         </div>
     `}).join('');
-    
-    // Then validate links asynchronously and add error class if needed
-    songs.forEach(async (song, index) => {
-        const cardId = `song-card-${allSongs.indexOf(song)}`;
-        const card = document.getElementById(cardId);
-        
-        // Skip validation for instrumental songs (they don't need lyrics)
-        if (song.instrumental == '1') {
-            return;
-        }
-        
-        if (card && song.lyricsFile) {
-            const isValid = await checkLyricsLink(song.lyricsFile);
-            if (!isValid) {
-                card.classList.add('song-card-error');
-            }
-        } else if (card && !song.lyricsFile) {
-            // If there's no lyrics file at all, mark as error
-            card.classList.add('song-card-error');
-        }
-    });
 }
 
 function openSong(index) {
@@ -370,12 +483,12 @@ function openSong(index) {
         searchTerm: document.getElementById('searchInput').value,
         sortBy: document.getElementById('sortBy').value,
         interpret: document.getElementById('filterInterpret').value,
-        fromYear: document.getElementById('filterFromYear').value,
-        beforeYear: document.getElementById('filterBeforeYear').value,
+        yearMin: document.getElementById('yearMin').value,
+        yearMax: document.getElementById('yearMax').value,
         key: document.getElementById('filterKey').value,
         instrumental: document.getElementById('filterInstrumental').value,
-        bpmMin: document.getElementById('filterBpmMin').value,
-        bpmMax: document.getElementById('filterBpmMax').value
+        bpmMin: document.getElementById('bpmMin').value,
+        bpmMax: document.getElementById('bpmMax').value
     };
     localStorage.setItem('filterState', JSON.stringify(filterState));
     

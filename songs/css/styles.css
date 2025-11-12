@@ -146,6 +146,91 @@ header h1 {
     width: 120px;
 }
 
+/* Range Slider Container */
+.range-slider-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    min-width: 200px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+}
+
+.range-slider-container label {
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #333;
+}
+
+.range-slider-wrapper {
+    position: relative;
+    height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.range-slider {
+    position: absolute;
+    width: 100%;
+    height: 8px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    outline: none;
+    pointer-events: none;
+}
+
+.range-slider::-webkit-slider-track {
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(135deg, #e13c72 0%, #7e22ce 100%);
+    border-radius: 4px;
+}
+
+.range-slider::-moz-range-track {
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(135deg, #e13c72 0%, #7e22ce 100%);
+    border-radius: 4px;
+}
+
+.range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border: 3px solid #7e22ce;
+    border-radius: 50%;
+    cursor: pointer;
+    pointer-events: auto;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.range-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: white;
+    border: 3px solid #7e22ce;
+    border-radius: 50%;
+    cursor: pointer;
+    pointer-events: auto;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.range-slider::-webkit-slider-thumb:hover {
+    background: #f0f0f0;
+    transform: scale(1.1);
+}
+
+.range-slider::-moz-range-thumb:hover {
+    background: #f0f0f0;
+    transform: scale(1.1);
+}
+
 #clearFilters {
     padding: 10px 20px;
     background: linear-gradient(135deg, #7e22ce 0%, #9333ea 100%);
@@ -414,6 +499,10 @@ header h1 {
     scroll-behavior: smooth;
     /* iOS-specific scrolling improvements */
     -webkit-overflow-scrolling: touch;
+}
+
+.range-slider-wrapper input {
+    padding: 10px 0;
 }
 
 /* Mobile Optimizations */
