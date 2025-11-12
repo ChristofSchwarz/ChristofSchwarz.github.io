@@ -13,10 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSong();
     setupEventListeners();
     
-    // Prime AudioContext on any user interaction (iOS requirement)
-    document.body.addEventListener('touchstart', initAudioContext, { once: true });
-    document.body.addEventListener('click', initAudioContext, { once: true });
-    
     // Auto-start play mode after a short delay to ensure DOM is ready
     setTimeout(() => {
         startGesture();
@@ -38,58 +34,7 @@ function setupEventListeners() {
     }
 }
 
-// Global AudioContext (created once, reused - required for iOS)
-let audioContext = null;
-let tickSounds = null; // Pre-generated audio buffers
-
-// Initialize AudioContext on first user interaction
-function initAudioContext() {
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        // Pre-generate tick sounds for better iOS compatibility
-        generateTickSounds();
-    }
-    // Resume in case it's suspended (iOS requirement)
-    if (audioContext.state === 'suspended') {
-        audioContext.resume();
-    }
-    return audioContext;
-}
-
-// Pre-generate tick sounds as audio buffers
-function generateTickSounds() {
-    if (!audioContext || tickSounds) return;
-    
-    const sampleRate = audioContext.sampleRate;
-    const duration = 0.08; // 80ms
-    const length = sampleRate * duration;
-    
-    // Create regular tick
-    const regularBuffer = audioContext.createBuffer(1, length, sampleRate);
-    const regularData = regularBuffer.getChannelData(0);
-    
-    // Create accent tick
-    const accentBuffer = audioContext.createBuffer(1, length, sampleRate);
-    const accentData = accentBuffer.getChannelData(0);
-    
-    for (let i = 0; i < length; i++) {
-        const t = i / sampleRate;
-        const envelope = Math.exp(-t * 30); // Exponential decay
-        
-        // Regular tick at 800Hz
-        regularData[i] = Math.sin(2 * Math.PI * 800 * t) * envelope * 0.5;
-        
-        // Accent tick at 1200Hz
-        accentData[i] = Math.sin(2 * Math.PI * 1200 * t) * envelope * 0.7;
-    }
-    
-    tickSounds = {
-        regular: regularBuffer,
-        accent: accentBuffer
-    };
-}
-
-// Count-in functionality - plays 8 tick sounds at song's BPM
+// Count-in button handler using playtones.js
 function playCountIn() {
     const bpm = parseFloat(currentSong.bpm);
     
@@ -98,57 +43,30 @@ function playCountIn() {
         return;
     }
     
-    // Calculate the interval between beats in milliseconds
-    const beatInterval = 60000 / bpm; // 60000ms = 1 minute
-    
-    // Initialize audio context (iOS requirement)
-    const ctx = initAudioContext();
+    // Get beats per bar from song data, default to 4
+    const beatsPerBar = parseInt(currentSong.beatsPerBar) || 4;
     
     // Disable button during count-in
     const countInBtn = document.getElementById('countInBtn');
     countInBtn.disabled = true;
     countInBtn.innerHTML = '<span class="btn-icon">🥁</span><span class="btn-text"> Counting...</span>';
     
-    // Ensure context is resumed (iOS)
-    ctx.resume().then(() => {
-        // Ensure sounds are generated
-        if (!tickSounds) {
-            generateTickSounds();
-        }
-        
-        // Function to play a single tick
-        function playTick(time, isAccent = false) {
-            const source = ctx.createBufferSource();
-            const gainNode = ctx.createGain();
-            
-            source.buffer = isAccent ? tickSounds.accent : tickSounds.regular;
-            source.connect(gainNode);
-            gainNode.connect(ctx.destination);
-            gainNode.gain.value = 1.0;
-            
-            source.start(time);
-        }
-        
-        // Schedule 8 ticks (2 bars of 4/4)
-        const startTime = ctx.currentTime + 0.15; // Small delay for iOS
-        for (let i = 0; i < 8; i++) {
-            const tickTime = startTime + (i * beatInterval / 1000);
-            // Accent on beats 1 and 5 (start of each bar)
-            const isAccent = (i === 0 || i === 4);
-            playTick(tickTime, isAccent);
-        }
-        
-        // Re-enable button after count-in completes
-        setTimeout(() => {
+    // Play count-in using playtones.js library (from window scope)
+    const success = window.playCountInTones(bpm, beatsPerBar, 
+        // onComplete callback
+        () => {
             countInBtn.disabled = false;
             countInBtn.innerHTML = '<span class="btn-icon">🥁</span><span class="btn-text"> Count In</span>';
-        }, beatInterval * 8 + 300);
-    }).catch((error) => {
-        console.error('Error playing count-in:', error);
-        alert('Could not play count-in audio. Please check your device settings.');
+        },
+        // onTick callback (optional - for visual feedback)
+        null
+    );
+    
+    if (!success) {
+        alert('Could not play count-in. Invalid BPM or beats per bar.');
         countInBtn.disabled = false;
         countInBtn.innerHTML = '<span class="btn-icon">🥁</span><span class="btn-text"> Count In</span>';
-    });
+    }
 }
 
 function loadSong() {
