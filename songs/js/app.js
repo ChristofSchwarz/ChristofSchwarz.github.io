@@ -117,6 +117,7 @@ function processSongsData(data) {
             year: normalized['year'] || normalized['year of release'] || '',
             key: normalized['key'] || '',
             bpm: normalized['bpm'] || '',
+            beat: normalized['beat'] || '',
             instrumental: normalized['instrumental'] || '',
             originalLink: normalized['link to original song'] || normalized['original'] || normalized['originallink'] || '',
             karaokeLink: normalized['link to karaoke version'] || normalized['karaoke'] || normalized['karaokelink'] || '',

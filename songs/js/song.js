@@ -43,8 +43,8 @@ function playCountIn() {
         return;
     }
     
-    // Get beats per bar from song data, default to 4
-    const beatsPerBar = parseInt(currentSong.beatsPerBar) || 4;
+    // Get strokes per beat from song data, default to 4
+    const strokesPerBeat = parseInt(currentSong.beat) || 4;
     
     // Disable button during count-in
     const countInBtn = document.getElementById('countInBtn');
@@ -52,7 +52,7 @@ function playCountIn() {
     countInBtn.innerHTML = '<span class="btn-icon">🥁</span><span class="btn-text"> Counting...</span>';
     
     // Play count-in using playtones.js library (from window scope)
-    const success = window.playCountInTones(bpm, beatsPerBar, 
+    const success = window.playCountInTones(bpm, strokesPerBeat, 
         // onComplete callback
         () => {
             countInBtn.disabled = false;
@@ -63,7 +63,7 @@ function playCountIn() {
     );
     
     if (!success) {
-        alert('Could not play count-in. Invalid BPM or beats per bar.');
+        alert('Could not play count-in. Invalid BPM or strokes per beat.');
         countInBtn.disabled = false;
         countInBtn.innerHTML = '<span class="btn-icon">🥁</span><span class="btn-text"> Count In</span>';
     }
@@ -92,6 +92,7 @@ function displaySongInfo() {
     if (currentSong.year) metaParts.push(currentSong.year);
     if (currentSong.key) metaParts.push(`Key: ${currentSong.key}`);
     if (currentSong.bpm) metaParts.push(`${currentSong.bpm} BPM`);
+    if (currentSong.beat) metaParts.push(`${currentSong.beat}`);
     
     document.getElementById('songMeta').textContent = metaParts.join(' • ');
     
@@ -124,6 +125,7 @@ function displaySongInfo() {
 
 async function loadLyrics() {
     const lyricsContainer = document.getElementById('lyricsContent');
+    const lyricsContainerFullwidth = document.querySelector('.lyrics-container-fullwidth');
     const editLink = document.getElementById('editLink');
     
     // Always show Edit button but make it active only for Google Docs
@@ -153,12 +155,14 @@ async function loadLyrics() {
                 if (response.ok) {
                     const html = await response.text();
                     lyricsContainer.innerHTML = html;
+                    if (lyricsContainerFullwidth) lyricsContainerFullwidth.style.backgroundColor = ''; // Reset background
                 } else {
                     lyricsContainer.innerHTML = `
                         <p style="color: #d32f2f;">❌ Lyrics file not found</p>
                         <p><strong>Tried to load:</strong> <code>${fullPath}</code></p>
                         <p><em>Please check the file path in your spreadsheet.</em></p>
                     `;
+                    if (lyricsContainerFullwidth) lyricsContainerFullwidth.style.backgroundColor = '#d1c3c3';
                 }
             } catch (error) {
                 lyricsContainer.innerHTML = `
@@ -166,6 +170,7 @@ async function loadLyrics() {
                     <p><strong>File:</strong> <code>lyrics/${currentSong.lyricsFile}</code></p>
                     <p><strong>Error:</strong> ${error.message}</p>
                 `;
+                if (lyricsContainerFullwidth) lyricsContainerFullwidth.style.backgroundColor = '#d1c3c3';
             }
         }
     } else {
@@ -176,9 +181,10 @@ async function loadLyrics() {
         editLink.style.pointerEvents = 'none';
         
         lyricsContainer.innerHTML = `
-            <p><em>No lyrics file specified for this song.</em></p>
+            <p><em>❌ No lyrics file specified for this song.</em></p>
             <p>To add lyrics, create an HTML file in the 'lyrics' folder, or provide a Google Docs URL in your spreadsheet.</p>
         `;
+        if (lyricsContainerFullwidth) lyricsContainerFullwidth.style.backgroundColor = '#d1c3c3';
     }
 }
 
@@ -219,6 +225,9 @@ async function loadGoogleDocLyrics(docUrl, container) {
             });
             
             container.innerHTML = bodyContent.innerHTML;
+            // Reset background on success
+            const lyricsContainerFullwidth = document.querySelector('.lyrics-container-fullwidth');
+            if (lyricsContainerFullwidth) lyricsContainerFullwidth.style.backgroundColor = '';
         } else {
             throw new Error('Could not parse Google Doc content');
         }
@@ -229,6 +238,8 @@ async function loadGoogleDocLyrics(docUrl, container) {
             <p>${error.message}</p>
             <p><em>Make sure the document is shared as "Anyone with the link can view"</em></p>
         `;
+        const lyricsContainerFullwidth = document.querySelector('.lyrics-container-fullwidth');
+        if (lyricsContainerFullwidth) lyricsContainerFullwidth.style.backgroundColor = '#d1c3c3';
     }
 }
 
