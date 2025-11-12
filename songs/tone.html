@@ -108,7 +108,7 @@
         <div class="info">
             <strong>Tone.js:</strong> Plays 8 tick sounds (2 bars of 4/4 time).<br>
             Beats 1 and 5 will be accented with a higher pitch.<br><br>
-            <strong>WAV Test:</strong> Plays a simple beep from a data URI.<br>
+            <strong>WAV Test2:</strong> Plays a simple beep from a data URI.<br>
             This helps determine if the issue is with Tone.js or iOS audio in general.
         </div>
     </div>
@@ -227,39 +227,45 @@
         function playWavTest() {
             document.getElementById('status').textContent = '🔊 Playing WAV test...';
             
-            // Create a simple 800Hz beep as a WAV data URI
-            // This is a minimal WAV file with a short beep
-            const wavDataUri = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+            // Use a real online sound file instead of data URI
+            // This is a public domain beep sound
+            const audioUrl = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
             
-            const audio = new Audio(wavDataUri);
+            const audio = new Audio(audioUrl);
+            audio.volume = 1.0;
             
             audio.addEventListener('canplay', () => {
-                console.log('WAV audio can play');
+                console.log('Audio can play');
+            });
+            
+            audio.addEventListener('loadeddata', () => {
+                console.log('Audio data loaded');
             });
             
             audio.addEventListener('play', () => {
-                console.log('WAV audio started playing');
-                document.getElementById('status').textContent = '✅ WAV playing...';
+                console.log('Audio started playing');
+                document.getElementById('status').textContent = '✅ Playing sound...';
             });
             
             audio.addEventListener('ended', () => {
-                console.log('WAV audio ended');
-                document.getElementById('status').textContent = '✅ WAV test complete!';
+                console.log('Audio ended');
+                document.getElementById('status').textContent = '✅ Audio test complete!';
                 setTimeout(() => {
                     document.getElementById('status').textContent = '';
                 }, 2000);
             });
             
             audio.addEventListener('error', (e) => {
-                console.error('WAV audio error:', e);
-                document.getElementById('status').textContent = '❌ WAV error: ' + audio.error.message;
+                console.error('Audio error:', e, audio.error);
+                document.getElementById('status').textContent = '❌ Audio error: ' + (audio.error ? audio.error.message : 'Unknown');
             });
             
+            // Try to play
             audio.play().then(() => {
-                console.log('WAV play() promise resolved');
+                console.log('Audio play() promise resolved');
             }).catch((error) => {
-                console.error('WAV play() failed:', error);
-                document.getElementById('status').textContent = '❌ WAV play failed: ' + error.message;
+                console.error('Audio play() failed:', error);
+                document.getElementById('status').textContent = '❌ Play failed: ' + error.message;
             });
         }
 
