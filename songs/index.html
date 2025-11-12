@@ -19,6 +19,9 @@
                 <button id="refreshBtn" class="upload-label">
                     🔄 Refresh from Google Sheets
                 </button>
+                <a id="editSheetLink" target="_blank" class="upload-label" style="text-decoration: none;">
+                    ✏️ Edit linked Google Sheet
+                </a>
                 <a id="driveFolderLink" target="_blank" class="upload-label" style="text-decoration: none;">
                     📂 Open Google Drive Folder
                 </a>
@@ -42,24 +45,24 @@
                 <select id="sortBy">
                     <option value="song">⇅ Sort by Song</option>
                     <option value="artist" selected>⇅ Sort by Artist</option>
-                    <option value="yearAsc">⇅ Sort by Release Year Asc</option>
-                    <option value="yearDesc">⇅ Sort by Release Year Desc</option>
+                    <option value="yearAsc">↓ Sort by Year Asc</option>
+                    <option value="yearDesc">↑ Sort by Year Desc</option>
                 </select>
                 
                 <select id="filterInterpret">
-                    <option value="">All Artists</option>
+                    <option value="">👥 All Artists</option>
                 </select>
                 
                 <select id="filterFromYear">
-                    <option value="">From Year</option>
+                    <option value="">📅 From Year</option>
                 </select>
                 
                 <select id="filterBeforeYear">
-                    <option value="">Before Year</option>
+                    <option value="">📅 Before Year</option>
                 </select>
                 
                 <select id="filterKey">
-                    <option value="">All Keys</option>
+                    <option value="">🎼 All Keys</option>
                 </select>
                 
                 <select id="filterInstrumental">

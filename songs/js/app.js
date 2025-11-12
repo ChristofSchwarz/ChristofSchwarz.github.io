@@ -21,6 +21,14 @@ async function loadConfig() {
         if (driveFolderLink && config.googleDriveFolder) {
             driveFolderLink.href = config.googleDriveFolder;
         }
+        
+        // Set Edit Google Sheet link
+        const editSheetLink = document.getElementById('editSheetLink');
+        if (editSheetLink && config.googleSheetsUrl) {
+            // Convert export URL to edit URL
+            const editUrl = config.googleSheetsUrl.replace('/export?format=csv', '/edit');
+            editSheetLink.href = editUrl;
+        }
     } catch (error) {
         console.error('Error loading config:', error);
         // Fallback to hardcoded URL if config fails
@@ -158,25 +166,25 @@ function populateFilters() {
     
     // Populate selects
     const interpretSelect = document.getElementById('filterInterpret');
-    interpretSelect.innerHTML = '<option value="">All Artists</option>';
+    interpretSelect.innerHTML = '<option value="">👥 All Artists</option>';
     interprets.forEach(interpret => {
         interpretSelect.innerHTML += `<option value="${interpret}">${interpret}</option>`;
     });
     
     const fromYearSelect = document.getElementById('filterFromYear');
-    fromYearSelect.innerHTML = '<option value="">From Year</option>';
+    fromYearSelect.innerHTML = '<option value="">📅 From Year</option>';
     years.forEach(year => {
         fromYearSelect.innerHTML += `<option value="${year}">${year}</option>`;
     });
     
     const beforeYearSelect = document.getElementById('filterBeforeYear');
-    beforeYearSelect.innerHTML = '<option value="">Before Year</option>';
+    beforeYearSelect.innerHTML = '<option value="">📅 Before Year</option>';
     years.forEach(year => {
         beforeYearSelect.innerHTML += `<option value="${year}">${year}</option>`;
     });
     
     const keySelect = document.getElementById('filterKey');
-    keySelect.innerHTML = '<option value="">All Keys</option>';
+    keySelect.innerHTML = '<option value="">🎼 All Keys</option>';
     keys.forEach(key => {
         keySelect.innerHTML += `<option value="${key}">${key}</option>`;
     });
@@ -227,6 +235,20 @@ function filterSongs() {
             // Sort by Artist, then Song title
             const artistCompare = (a.interpret || '').localeCompare(b.interpret || '');
             if (artistCompare !== 0) return artistCompare;
+            return (a.songName || '').localeCompare(b.songName || '');
+        } else if (sortBy === 'yearAsc') {
+            // Sort by Year ascending (oldest first)
+            const yearA = parseInt(a.year) || 0;
+            const yearB = parseInt(b.year) || 0;
+            if (yearA !== yearB) return yearA - yearB;
+            // Secondary sort by song title
+            return (a.songName || '').localeCompare(b.songName || '');
+        } else if (sortBy === 'yearDesc') {
+            // Sort by Year descending (newest first)
+            const yearA = parseInt(a.year) || 0;
+            const yearB = parseInt(b.year) || 0;
+            if (yearA !== yearB) return yearB - yearA;
+            // Secondary sort by song title
             return (a.songName || '').localeCompare(b.songName || '');
         } else {
             // Sort by Song title only
@@ -290,7 +312,9 @@ async function displaySongs(songs) {
     // Update song counter
     const counter = document.getElementById('songCounter');
     if (counter) {
-        counter.textContent = `${songs.length} song${songs.length !== 1 ? 's' : ''}`;
+        const countText = songs.length;
+        const labelText = songs.length !== 1 ? 'songs' : 'song';
+        counter.innerHTML = `${countText} <span class="counter-label">${labelText}</span>`;
     }
     
     if (songs.length === 0) {
