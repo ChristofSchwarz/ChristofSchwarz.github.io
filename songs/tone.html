@@ -238,67 +238,72 @@
             document.getElementById('status').textContent = '🎵 Generating count-in...';
 
             try {
-                // Calculate interval between each tick (subdivision of the beat)
+                // Calculate interval between each BEAT (not tick)
                 const beatDuration = (60 / bpm) * 1000; // Duration of one beat in ms
-                const tickInterval = beatDuration / beatsPerBar; // Time between ticks
                 
                 // Total ticks: 2 bars × beatsPerBar
                 const totalTicks = beatsPerBar * 2;
-                let currentTick = 0;
                 
                 // Pre-generate audio files for better timing
                 const accentBlob = createWavBlob(1200, 0.08);
                 const regularBlob = createWavBlob(800, 0.08);
                 
-                function playNextTick() {
-                    if (currentTick >= totalTicks) {
-                        // All ticks done
-                        isPlaying = false;
-                        playBtn.disabled = false;
-                        document.getElementById('status').textContent = '✅ Count-in complete!';
-                        
-                        setTimeout(() => {
-                            document.getElementById('status').textContent = '';
-                        }, 2000);
-                        return;
-                    }
+                // Record start time for absolute scheduling
+                const startTime = Date.now();
+                
+                document.getElementById('status').textContent = `🥁 Count-in (${beatsPerBar}/4 time)...`;
+                
+                // Schedule all ticks at once using absolute timestamps
+                for (let i = 0; i < totalTicks; i++) {
+                    // Calculate which beat this tick represents
+                    const beatNumber = Math.floor(i / beatsPerBar);
+                    const tickInBeat = i % beatsPerBar;
                     
-                    // First tick of each bar is accented (tick 0 and tick beatsPerBar)
-                    const isAccent = (currentTick % beatsPerBar === 0);
+                    // Each tick represents one BEAT
+                    const tickTime = startTime + (i * beatDuration);
+                    const delay = tickTime - Date.now();
+                    
+                    // First tick of each bar is accented
+                    const isAccent = (tickInBeat === 0);
                     const frequency = isAccent ? 1200 : 800;
                     
-                    console.log(`Playing tick ${currentTick + 1}/${totalTicks}: ${frequency}Hz (${isAccent ? 'ACCENT' : 'regular'})`);
-                    
-                    // Use pre-generated WAV
-                    const wavBlob = isAccent ? accentBlob : regularBlob;
-                    const wavUrl = URL.createObjectURL(wavBlob);
-                    
-                    // Play it using HTML5 Audio
-                    const audio = new Audio(wavUrl);
-                    audio.volume = 1.0;
-                    
-                    audio.play().then(() => {
-                        console.log(`Tick ${currentTick + 1} started`);
-                    }).catch((error) => {
-                        console.error(`Error playing tick ${currentTick + 1}:`, error);
-                    });
-                    
-                    // Clean up the URL after playing
-                    audio.addEventListener('ended', () => {
-                        URL.revokeObjectURL(wavUrl);
-                    });
-                    
-                    currentTick++;
-                    
-                    if (currentTick === 1) {
-                        document.getElementById('status').textContent = `🥁 Count-in (${beatsPerBar}/4 time)...`;
-                    }
-                    
-                    // Schedule next tick
-                    setTimeout(playNextTick, tickInterval);
+                    // Schedule this tick
+                    setTimeout(() => {
+                        console.log(`Playing tick ${i + 1}/${totalTicks}: ${frequency}Hz (${isAccent ? 'ACCENT' : 'regular'})`);
+                        
+                        // Use pre-generated WAV
+                        const wavBlob = isAccent ? accentBlob : regularBlob;
+                        const wavUrl = URL.createObjectURL(wavBlob);
+                        
+                        // Play it using HTML5 Audio
+                        const audio = new Audio(wavUrl);
+                        audio.volume = 1.0;
+                        
+                        audio.play().then(() => {
+                            console.log(`Tick ${i + 1} started at ${Date.now() - startTime}ms`);
+                        }).catch((error) => {
+                            console.error(`Error playing tick ${i + 1}:`, error);
+                        });
+                        
+                        // Clean up the URL after playing
+                        audio.addEventListener('ended', () => {
+                            URL.revokeObjectURL(wavUrl);
+                        });
+                        
+                        // Check if this is the last tick
+                        if (i === totalTicks - 1) {
+                            setTimeout(() => {
+                                isPlaying = false;
+                                playBtn.disabled = false;
+                                document.getElementById('status').textContent = '✅ Count-in complete!';
+                                
+                                setTimeout(() => {
+                                    document.getElementById('status').textContent = '';
+                                }, 2000);
+                            }, 500);
+                        }
+                    }, delay);
                 }
-                
-                playNextTick();
 
             } catch (error) {
                 console.error('Error playing count-in:', error);
