@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donut Chart GeoJSON Generator</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 20% 40% 40%;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .controls, .segments-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .control-group input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .control-group input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .segments-container {
+            margin-bottom: 20px;
+        }
+
+        .segment-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .segment-input input[type="color"] {
+            width: 50px;
+            height: 40px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .segment-input input[type="text"] {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 100px;
+        }
+
+        .segment-input input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .segment-input button {
+            padding: 8px 12px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .segment-input button:hover {
+            background: #ff3838;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #2ed573;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #26de81;
+            transform: translateY(-2px);
+        }
+
+        .btn-add {
+            background: #5352ed;
+            color: white;
+        }
+
+        .btn-add:hover {
+            background: #3742fa;
+        }
+
+        .visualization {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        #map {
+            width: 100%;
+            height: 400px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            background: #f5f5f5;
+        }
+
+        .output-section {
+            margin-top: 20px;
+        }
+
+        .output-section h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .output-section textarea {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            resize: vertical;
+            overflow: auto;
+            white-space: nowrap;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-box p {
+            color: #1565c0;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+/* 
+        @media (max-width: 1400px) {
+            .content-wrapper {
+                grid-template-columns: 1fr 1fr;
+            }
+            .segments-panel {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+            }
+        } */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍩 Donut Chart GeoJSON Generator</h1>
+        
+        <div class="content-wrapper">
+            <div class="controls">
+                <h3 style="margin-bottom: 15px; color: #667eea;">Parameters</h3>
+
+                <div class="control-group">
+                    <label>Starting Angle (degrees)</label>
+                    <input type="number" id="startingAngle" value="-120" step="1" oninput="updateEndingAngle(); generateChart()">
+                </div>
+
+                <div class="control-group">
+                    <label>Outer Radius (km)</label>
+                    <input type="number" id="outerRadius" value="2" step="0.1" min="0.1" oninput="generateChart()">
+                </div>
+
+                <div class="control-group">
+                    <label>Inner Radius (km)</label>
+                    <input type="number" id="innerRadius" value="1" step="0.1" min="0.1" oninput="generateChart()">
+                </div>
+
+                <div class="control-group">
+                    <label>Point every n degrees</label>
+                    <input type="number" id="resolution" value="3" step="0.5" min="0.5" max="10" oninput="generateChart()">
+                </div>
+
+                <div class="control-group">
+                    <label>Needle Degree</label>
+                    <input type="number" id="needleDegree" value="0" step="1" oninput="generateChart()">
+                </div>
+
+            </div>
+
+            <div class="segments-panel">
+                <h3 style="margin-bottom: 15px; color: #667eea;">Segments</h3>
+                
+                <div class="info-box">
+                    <p><strong>Tip:</strong> Each segment angle is measured in degrees. The sum can exceed 360° for overlapping segments.</p>
+                </div>
+
+                <div class="segments-container">
+                    <div id="segmentsInputs"></div>
+                    <button class="btn btn-add" onclick="addSegment()">+ Add Segment</button>
+                    <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                        <label style="display: block; font-weight: 600; color: #333; margin-bottom: 8px;">Ending Angle</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="number" id="endingAngle" value="0" step="0.001" style="flex: 1; padding: 8px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;" oninput="onEndingAngleChange()">
+                            <button id="redistributeBtn" class="btn" style="width: auto; padding: 8px 16px; margin: 0; background: #95a5a6; cursor: not-allowed;" onclick="redistributeSegments()" disabled>Redistribute</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="visualization">
+                <div id="map"></div>
+                
+                <div class="output-section">
+                    <h3>Data Output</h3>
+                    <textarea id="geoJsonOutput" readonly style="height: 200px;"></textarea>
+                    <button class="btn btn-secondary" onclick="copyGeoJSON()" style="margin-top: 10px;">Copy to Clipboard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let map;
+        let segmentLayers = [];
+        let pointMarkers = [];
+        let needleLayer = null;
+        let segmentCount = 0;
+
+        // Default segment colors
+        const defaultColors = [
+            '#E36C0A', '#FDAE61', '#FEE090', '#CCCCCC',
+            '#74ADD1', '#4575B4', '#313695', '#85C1E2'
+        ];
+        
+        // Default segment names
+        const defaultNames = [
+            'sehr negativ', 'negativ', 'eher negativ', 'neutral',
+            'eher positiv', 'positiv', 'sehr positiv'
+        ];
+
+        // Initialize map without tile layer
+        function initMap() {
+            if (map) {
+                map.remove();
+            }
+            
+            map = L.map('map', {
+                center: [0, 0],
+                zoom: 11,
+                zoomControl: true,
+                attributionControl: false
+            });
+        }
+
+        // Add a segment input
+        function addSegment() {
+            const container = document.getElementById('segmentsInputs');
+            const segmentDiv = document.createElement('div');
+            segmentDiv.className = 'segment-input';
+            segmentDiv.dataset.id = segmentCount;
+            
+            const defaultName = defaultNames[segmentCount] || `Segment ${segmentCount + 1}`;
+            segmentDiv.innerHTML = `
+                <input type="color" value="${defaultColors[segmentCount]}" title="Segment color" oninput="generateChart()">
+                <input type="text" placeholder="Name" value="${defaultName}" oninput="generateChart()">
+                <input type="number" placeholder="Angle" min="0" max="360" step="0.001" value="34.286" oninput="updateEndingAngle(); generateChart()">
+                <button onclick="removeSegment(${segmentCount})">×</button>
+            `;
+            
+            container.appendChild(segmentDiv);
+            segmentCount++;
+            
+            // Auto-generate if map is initialized
+            if (map) {
+                updateEndingAngle();
+                generateChart();
+            }
+        }
+
+        // Remove a segment input
+        function removeSegment(id) {
+            const segment = document.querySelector(`[data-id="${id}"]`);
+            if (segment) {
+                segment.remove();
+                updateEndingAngle();
+                generateChart();
+            }
+        }
+
+        // Calculate and display ending angle
+        function updateEndingAngle() {
+            const startingAngle = parseFloat(document.getElementById('startingAngle').value) || 0;
+            const segmentInputs = document.querySelectorAll('.segment-input');
+            let totalAngle = 0;
+            
+            segmentInputs.forEach(segmentDiv => {
+                const angle = parseFloat(segmentDiv.querySelector('input[type="number"]').value) || 0;
+                totalAngle += angle;
+            });
+            
+            const endingAngle = startingAngle + totalAngle;
+            const endingAngleInput = document.getElementById('endingAngle');
+            endingAngleInput.value = endingAngle.toFixed(3);
+            endingAngleInput.dataset.calculated = endingAngle.toFixed(3);
+            
+            // Disable redistribute button when angle is auto-calculated
+            const redistributeBtn = document.getElementById('redistributeBtn');
+            redistributeBtn.disabled = true;
+            redistributeBtn.style.background = '#95a5a6';
+            redistributeBtn.style.cursor = 'not-allowed';
+        }
+
+        // Handle manual ending angle changes
+        function onEndingAngleChange() {
+            const endingAngleInput = document.getElementById('endingAngle');
+            const currentValue = parseFloat(endingAngleInput.value);
+            const calculatedValue = parseFloat(endingAngleInput.dataset.calculated);
+            const redistributeBtn = document.getElementById('redistributeBtn');
+            
+            // Enable redistribute button if value differs from calculated
+            if (Math.abs(currentValue - calculatedValue) > 0.001) {
+                redistributeBtn.disabled = false;
+                redistributeBtn.style.background = '#5352ed';
+                redistributeBtn.style.cursor = 'pointer';
+            } else {
+                redistributeBtn.disabled = true;
+                redistributeBtn.style.background = '#95a5a6';
+                redistributeBtn.style.cursor = 'not-allowed';
+            }
+        }
+
+        // Redistribute segment angles proportionally
+        function redistributeSegments() {
+            const startingAngle = parseFloat(document.getElementById('startingAngle').value) || 0;
+            const targetEndingAngle = parseFloat(document.getElementById('endingAngle').value);
+            const segmentInputs = document.querySelectorAll('.segment-input');
+            
+            // Calculate current total angle
+            let currentTotal = 0;
+            const currentAngles = [];
+            segmentInputs.forEach(segmentDiv => {
+                const angle = parseFloat(segmentDiv.querySelector('input[type="number"]').value) || 0;
+                currentAngles.push(angle);
+                currentTotal += angle;
+            });
+            
+            if (currentTotal === 0) return;
+            
+            // Calculate target total (ending - starting)
+            const targetTotal = targetEndingAngle - startingAngle;
+            
+            // Redistribute proportionally
+            segmentInputs.forEach((segmentDiv, index) => {
+                const ratio = currentAngles[index] / currentTotal;
+                const newAngle = targetTotal * ratio;
+                segmentDiv.querySelector('input[type="number"]').value = newAngle.toFixed(3);
+            });
+            
+            // Update ending angle and regenerate chart
+            updateEndingAngle();
+            generateChart();
+        }
+
+        // Convert polar coordinates (distance, bearing) to lat/lng
+        function destinationPoint(lat, lng, distance, bearing) {
+            const R = 6371; // Earth's radius in km
+            const δ = distance / R; // angular distance
+            const θ = bearing * Math.PI / 180; // bearing in radians
+            
+            const φ1 = lat * Math.PI / 180;
+            const λ1 = lng * Math.PI / 180;
+            
+            const φ2 = Math.asin(
+                Math.sin(φ1) * Math.cos(δ) +
+                Math.cos(φ1) * Math.sin(δ) * Math.cos(θ)
+            );
+            
+            const λ2 = λ1 + Math.atan2(
+                Math.sin(θ) * Math.sin(δ) * Math.cos(φ1),
+                Math.cos(δ) - Math.sin(φ1) * Math.sin(φ2)
+            );
+            
+            return {
+                lat: φ2 * 180 / Math.PI,
+                lng: λ2 * 180 / Math.PI
+            };
+        }
+
+        // Generate a needle triangle as GeoJSON polygon
+        function generateNeedleGeoJSON(centerLat, centerLng, outerRadius, needleAngle) {
+            const baseWidth = outerRadius * 0.02; // Needle base width (2% of outer radius)
+            
+            // Calculate the three points of the triangle
+            // Tip at outer radius
+            const tip = destinationPoint(centerLat, centerLng, outerRadius, needleAngle);
+            
+            // Base points perpendicular to needle direction
+            const baseLeft = destinationPoint(centerLat, centerLng, baseWidth, needleAngle - 90);
+            const baseRight = destinationPoint(centerLat, centerLng, baseWidth, needleAngle + 90);
+            
+            // Create triangle coordinates
+            const coordinates = [
+                [tip.lng, tip.lat],
+                [baseLeft.lng, baseLeft.lat],
+                [baseRight.lng, baseRight.lat],
+                [tip.lng, tip.lat] // Close the polygon
+            ];
+            
+            return {
+                type: 'Polygon',
+                coordinates: [coordinates]
+            };
+        }
+
+        // Generate a donut segment as GeoJSON polygon
+        function generateSegmentGeoJSON(centerLat, centerLng, innerRadius, outerRadius, startAngle, endAngle, resolution) {
+            const coordinates = [];
+            const angleSpan = endAngle - startAngle;
+            const numPoints = Math.max(Math.ceil(angleSpan / resolution), 2); // ~1 point per resolution degrees
+            
+            // Outer arc (clockwise)
+            for (let i = 0; i <= numPoints; i++) {
+                const angle = startAngle + (angleSpan * i / numPoints);
+                const point = destinationPoint(centerLat, centerLng, outerRadius, angle);
+                coordinates.push([point.lng, point.lat]);
+            }
+            
+            // Inner arc (counter-clockwise)
+            for (let i = numPoints; i >= 0; i--) {
+                const angle = startAngle + (angleSpan * i / numPoints);
+                const point = destinationPoint(centerLat, centerLng, innerRadius, angle);
+                coordinates.push([point.lng, point.lat]);
+            }
+            
+            // Close the polygon
+            coordinates.push(coordinates[0]);
+            
+            return {
+                type: 'Polygon',
+                coordinates: [coordinates]
+            };
+        }
+
+        // Generate the complete chart
+        function generateChart() {
+            const centerLat = 0;
+            const centerLng = 0;
+            const outerRadius = parseFloat(document.getElementById('outerRadius').value);
+            const innerRadius = parseFloat(document.getElementById('innerRadius').value);
+            const startingAngle = parseFloat(document.getElementById('startingAngle').value);
+            
+            if (innerRadius >= outerRadius) {
+                alert('Inner radius must be less than outer radius');
+                return;
+            }
+            
+            const segmentInputs = document.querySelectorAll('.segment-input');
+            if (segmentInputs.length === 0) {
+                alert('Please add at least one segment');
+                return;
+            }
+            
+            // Clear existing layers
+            segmentLayers.forEach(layer => map.removeLayer(layer));
+            segmentLayers = [];
+            pointMarkers.forEach(marker => map.removeLayer(marker));
+            pointMarkers = [];
+            if (needleLayer) {
+                map.removeLayer(needleLayer);
+                needleLayer = null;
+            }
+            
+            // Initialize map with current center
+            initMap();
+            
+            // Create GeoJSON feature collection
+            const features = [];
+            let currentAngle = startingAngle;
+            
+            segmentInputs.forEach((segmentDiv, index) => {
+                const color = segmentDiv.querySelector('input[type="color"]').value;
+                const name = segmentDiv.querySelector('input[type="text"]').value || `Segment ${index + 1}`;
+                const angle = parseFloat(segmentDiv.querySelector('input[type="number"]').value) || 0;
+                
+                if (angle <= 0) return;
+                
+                const startAngle = currentAngle;
+                const endAngle = currentAngle + angle;
+                
+                // Generate GeoJSON for this segment
+                const resolution = parseFloat(document.getElementById('resolution').value);
+                const geometry = generateSegmentGeoJSON(
+                    centerLat, centerLng,
+                    innerRadius, outerRadius,
+                    startAngle, endAngle,
+                    resolution
+                );
+                
+                const feature = {
+                    type: 'Feature',
+                    properties: {
+                        segmentIndex: index,
+                        name: name,
+                        startAngle: startAngle,
+                        endAngle: endAngle,
+                        angle: angle,
+                        color: color
+                    },
+                    geometry: geometry
+                };
+                
+                features.push(feature);
+                
+                // Add to map
+                const layer = L.geoJSON(feature, {
+                    style: {
+                        fillColor: color,
+                        fillOpacity: 0.6,
+                        color: '#333',
+                        weight: 2
+                    }
+                }).addTo(map);
+                
+                layer.bindPopup(`
+                    <strong>${name}</strong><br>
+                    Segment ${index + 1}<br>
+                    Angle: ${angle}°<br>
+                    Start: ${startAngle}°<br>
+                    End: ${endAngle}°
+                `);
+                
+                segmentLayers.push(layer);
+                currentAngle = endAngle;
+            });
+            
+            // Create complete GeoJSON
+            const geoJSON = {
+                type: 'FeatureCollection',
+                features: features
+            };
+            
+            // Create merged caret-separated table format
+            const tableLines = ['segmentNumber^segmentColor^point^polygon'];
+            
+            features.forEach((feature, index) => {
+                // Round coordinates to 8 decimal places
+                const coordinates = feature.geometry.coordinates[0].map(coord => 
+                    [Math.round(coord[0] * 1e8) / 1e8, Math.round(coord[1] * 1e8) / 1e8]
+                );
+                const polygonStr = JSON.stringify(coordinates);
+                
+                // Calculate middle point on outer radius for this segment
+                const startAngle = feature.properties.startAngle;
+                const endAngle = feature.properties.endAngle;
+                const middleAngle = (startAngle + endAngle) / 2;
+                const middlePoint = destinationPoint(centerLat, centerLng, outerRadius, middleAngle);
+                
+                // Add marker to map
+                const marker = L.circleMarker([middlePoint.lat, middlePoint.lng], {
+                    radius: 6,
+                    fillColor: feature.properties.color,
+                    fillOpacity: 1,
+                    color: '#000',
+                    weight: 2
+                }).addTo(map);
+                
+                marker.bindPopup(`<strong>Point ${index + 1}</strong><br>Segment: ${index + 1}<br>Angle: ${middleAngle.toFixed(1)}°`);
+                pointMarkers.push(marker);
+                
+                // Create point data [lng, lat] with 8 decimal precision
+                const roundedLng = Math.round(middlePoint.lng * 1e8) / 1e8;
+                const roundedLat = Math.round(middlePoint.lat * 1e8) / 1e8;
+                const pointStr = JSON.stringify([roundedLng, roundedLat]);
+                
+                // Combine into single row: segmentNumber^segmentColor^point^polygon
+                const segmentColor = feature.properties.color;
+                tableLines.push(`${index + 1}^${segmentColor}^${pointStr}^${polygonStr}`);
+            });
+            
+            const formattedOutput = tableLines.join('\n');
+            document.getElementById('geoJsonOutput').value = formattedOutput;
+            
+            // Store the full GeoJSON for clipboard function
+            document.getElementById('geoJsonOutput').dataset.fullGeojson = JSON.stringify(geoJSON);
+            
+            // Render needle
+            const needleDegree = parseFloat(document.getElementById('needleDegree').value);
+            if (!isNaN(needleDegree)) {
+                const needleGeometry = generateNeedleGeoJSON(
+                    centerLat, centerLng,
+                    outerRadius,
+                    startingAngle + needleDegree
+                );
+                
+                needleLayer = L.geoJSON({
+                    type: 'Feature',
+                    properties: { type: 'needle' },
+                    geometry: needleGeometry
+                }, {
+                    style: {
+                        fillColor: '#ff0000',
+                        fillOpacity: 0.9,
+                        color: '#990000',
+                        weight: 2
+                    }
+                }).addTo(map);
+                
+                needleLayer.bindPopup(`<strong>Needle</strong><br>Angle: ${needleDegree}°`);
+            }
+            
+            // Fit map to bounds
+            if (segmentLayers.length > 0) {
+                const group = L.featureGroup(segmentLayers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+        // Copy GeoJSON to clipboard
+        function copyGeoJSON() {
+            const textarea = document.getElementById('geoJsonOutput');
+            if (!textarea.value) {
+                alert('Generate a chart first!');
+                return;
+            }
+            
+            // Copy the formatted table output
+            const formattedOutput = textarea.value;
+            navigator.clipboard.writeText(formattedOutput).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                // Fallback for older browsers
+                const tempTextarea = document.createElement('textarea');
+                tempTextarea.value = formattedOutput;
+                document.body.appendChild(tempTextarea);
+                tempTextarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextarea);
+                
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            // Add 7 default segments
+            for (let i = 0; i < 7; i++) {
+                addSegment();
+            }
+            // Generate initial chart
+            updateEndingAngle();
+            generateChart();
+        });
+    </script>
+</body>
+</html>
