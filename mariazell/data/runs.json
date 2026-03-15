@@ -1,0 +1,44 @@
+[
+  {
+    "id": "2026-03-06-via-sacra-bis-st-veit",
+    "date": "2026-03-06",
+    "title": "Via Sacra Etappe 3 (St.Veit/Gölsen)",
+    "distance": 30352,
+    "duration": 16017,
+    "totalTime": 16017,
+    "ascent": 437,
+    "descent": 502,
+    "calories": 0,
+    "gpx": "gpx/Via_Sacra_bis_St_Veit.gpx",
+    "photos": [],
+    "notes": ""
+  },
+  {
+    "id": "2025-09-21-via-sacra-etappe-2-renzenhof-",
+    "date": "2025-09-21",
+    "title": "Via Sacra Etappe 2 (Renzenhof)",
+    "distance": 19041,
+    "duration": 8643,
+    "totalTime": 9261,
+    "ascent": 508,
+    "descent": 381,
+    "calories": 1465,
+    "gpx": "gpx/Via_Sacra_Etappe_2_(Renzenhof).gpx",
+    "photos": [],
+    "notes": ""
+  },
+  {
+    "id": "2025-02-23-via-sacra-etappe-1-heiligenkreuz-",
+    "date": "2025-02-23",
+    "title": "Via Sacra Etappe 1 (Heiligenkreuz)",
+    "distance": 15780,
+    "duration": 6428,
+    "totalTime": 6581,
+    "ascent": 496,
+    "descent": 474,
+    "calories": 1496,
+    "gpx": "gpx/Via_Sacra_Etappe_1_(Heiligenkreuz).gpx",
+    "photos": [],
+    "notes": ""
+  }
+]

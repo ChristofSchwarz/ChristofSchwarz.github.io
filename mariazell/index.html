@@ -1,4 +1,52 @@
-<a href="https://www.bergfex.at/mybergfex/activities/activity/bdf1141b6e7071ca89150b38758dae90/">Etappe 1 - Perchtoldsdorf - Heiligenkreuz</a>
-<a href="https://www.bergfex.at/mybergfex/activities/activity/5337ea47e2f79f3b7e38c0c9250db9e8/">Etappe 2 - Heiligenkreuz - Renzenhof</a>
-<a href="https://strava.app.link/wAHXmKgtw1b">Etappe 3 - Renzenhof - Kaumberg - Araburg - Hainfeld - St. Veit/Gölsen</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Run Mariazell</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app">
+    <header id="top-bar">
+      <div id="brand">&#x1F3C3; Run Mariazell</div>
+      <div id="lifetime-stats">
+        <span class="stat"><strong id="stat-runs">0</strong> runs</span>
+        <span class="stat"><strong id="stat-distance">0</strong> km</span>
+        <span class="stat"><strong id="stat-ascent">0</strong> m &#x2191;</span>
+      </div>
+    </header>
+    <div id="main">
+      <aside id="sidebar">
+        <div id="sidebar-toolbar">
+          <label id="sort-label">
+            <input type="checkbox" id="sort-chrono" checked />
+            Chronologisch
+          </label>
+        </div>
+        <div id="run-list"></div>
+      </aside>
+      <div id="map-container">
+        <div id="map"></div>
+        <div id="elevation-panel" class="hidden">
+          <div id="elevation-header">
+            <span id="elevation-title"></span>
+            <button id="elevation-close">&#x2715;</button>
+          </div>
+          <svg id="elevation-chart" viewBox="0 0 800 110" preserveAspectRatio="none"></svg>
+        </div>
+      </div>
+    </div>
+  </div>
 
+  <div id="photo-modal" class="hidden">
+    <div id="photo-modal-backdrop"></div>
+    <img id="photo-modal-img" src="" alt="" />
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-gpx@1.7.0/gpx.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
