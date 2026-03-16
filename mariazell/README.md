@@ -1,6 +1,6 @@
 # Running to Mariazell
 
-The **Via Sacra** is the historic pilgrimage route from Vienna to the Basilika Mariazell in Styria — roughly 120 km through the Vienna Woods, the Triestingtal valley, and the Northern Limestone Alps. Pilgrims have walked it for centuries. I'm running it.
+The **Via Sacra** is the historic pilgrimage route from Vienna to the Basilika Mariazell in Styria — roughly 120 km through the Vienna Woods, the Triestingtal valley, and the Northern Limestone Alps. Pilgrims have walked it for centuries. We're running it.
 
 ## Why?
 
@@ -8,9 +8,11 @@ There's something about moving through landscape on your own two feet that no ca
 
 The route also happens to be beautiful trail-running terrain: long forest ridges, steady climbs, and technical descents with enough asphalt connecting sections to keep the navigation honest.
 
+It's also more fun with two. **Christof and Stefan** have been tackling the stages together, usually on a weekend, somewhere between sport and pilgrimage.
+
 ## The Route
 
-The classic Via Sacra is divided into stages. I'm running each stage separately, usually on a weekend, and piecing the route together over time.
+The classic Via Sacra is divided into stages. We're running each stage separately and piecing the route together over time.
 
 | Stage | From → To | Distance |
 |-------|-----------|----------|
