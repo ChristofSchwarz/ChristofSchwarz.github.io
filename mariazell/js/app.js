@@ -406,6 +406,13 @@ function renderMultiElevationChart(segments, visStart, visEnd, minEle, maxEle) {
     `<line x1="${pad.left}" y1="${Y(e).toFixed(1)}" x2="${pad.left+w}" y2="${Y(e).toFixed(1)}" stroke="#f0efed" stroke-width="1"/>`
   ).join('');
 
+  // Segment boundary lines (between consecutive segments, skip first)
+  const boundaryLines = segments.slice(1).map(seg => {
+    const x = X(seg.offset).toFixed(1);
+    return `<line x1="${x}" y1="${pad.top}" x2="${x}" y2="${pad.top + h}"
+      stroke="#ccc" stroke-width="1" stroke-dasharray="3,3"/>`;
+  }).join('');
+
   // Distance axis (6 ticks across visible range)
   const distTicks = Array.from({ length: 6 }, (_, i) => {
     const d = visStart + (visRange / 5) * i;
@@ -420,6 +427,7 @@ function renderMultiElevationChart(segments, visStart, visEnd, minEle, maxEle) {
   svg.innerHTML = `
     <defs>${defs}</defs>
     ${gridLines}
+    ${boundaryLines}
     ${paths}
     <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top+h}" stroke="#ddd" stroke-width="1"/>
     <line x1="${pad.left}" y1="${pad.top+h}" x2="${pad.left+w}" y2="${pad.top+h}" stroke="#ddd" stroke-width="1"/>
