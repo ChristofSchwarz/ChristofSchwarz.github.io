@@ -1,17 +1,16 @@
 // ── Config ────────────────────────────────────────────────────────────────
-const TRACK_COLOR     = '#d95a18';
-const TRACK_DIM_COLOR = '#bbb';
-const TRACK_WEIGHT     = 4;
-const TRACK_DIM_WEIGHT = 1.5;
+const TRAIL_COLORS = ['#d95a18', '#2e7dd1', '#2da44e']; // orange, blue, green
+const TRACK_WEIGHT = 3.5;
 
 // ── State ─────────────────────────────────────────────────────────────────
 let map;
-let runsData = [];
-let trackLayers = {};   // id → L.GPX layer
-let selectedId = null;
-let elevationCache = {}; // id → parsed points
-let chartState    = null;
-let hoverMarker   = null;
+let runsData    = [];
+let trackLayers = {};    // id → L.GPX layer
+let runColors   = {};    // id → color string
+let activeIds   = new Set();
+let elevationCache = {};
+let chartState     = null;
+let hoverMarker    = null;
 
 // ── Init ──────────────────────────────────────────────────────────────────
 async function init() {
@@ -35,6 +34,12 @@ async function init() {
 
   runsData = runs;
 
+  // Assign a color to every run before rendering cards
+  runs.forEach((run, i) => {
+    runColors[run.id] = TRAIL_COLORS[i % TRAIL_COLORS.length];
+    activeIds.add(run.id);
+  });
+
   renderLifetimeStats(runs);
   renderRunList(sortedRuns());
 
@@ -50,11 +55,18 @@ async function init() {
 
   document.getElementById('photo-modal-backdrop').addEventListener('click', closePhotoModal);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePhotoModal(); });
+
+  // Mobile sidebar toggle
+  document.getElementById('sidebar-handle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+  });
 }
 
 // ── Lifetime stats ────────────────────────────────────────────────────────
 function renderLifetimeStats(runs) {
   document.getElementById('stat-runs').textContent = runs.length;
+  const handleLabel = document.getElementById('sidebar-handle-label');
+  if (handleLabel) handleLabel.textContent = `${runs.length} run${runs.length !== 1 ? 's' : ''} — tap to show`;
   document.getElementById('stat-distance').textContent =
     (runs.reduce((s, r) => s + r.distance, 0) / 1000).toFixed(1);
   document.getElementById('stat-ascent').textContent =
@@ -77,7 +89,12 @@ function renderRunList(runs) {
   list.querySelectorAll('.run-card').forEach(card => {
     card.addEventListener('click', () => {
       const run = runsData.find(r => r.id === card.dataset.id);
-      if (run) selectRun(run);
+      if (run) toggleRun(run);
+    });
+    card.querySelector('.btn-elev').addEventListener('click', e => {
+      e.stopPropagation();
+      const run = runsData.find(r => r.id === card.dataset.id);
+      if (run) showElevationProfile(run);
     });
   });
 }
@@ -95,8 +112,10 @@ function runCardHTML(run) {
     ? `<div class="run-notes">${escapeHtml(run.notes)}</div>`
     : '';
 
+  const color = runColors[run.id] || TRAIL_COLORS[0];
+
   return `
-    <div class="run-card" data-id="${run.id}">
+    <div class="run-card" data-id="${run.id}" style="--track-c:${color}">
       <div class="run-card-header">
         <span class="run-date">${dateStr}</span>
         <span class="run-distance">${km} km</span>
@@ -106,6 +125,7 @@ function runCardHTML(run) {
         <span>&#x23F1; ${dur}</span>
         <span>&#x26A1; ${pace}/km</span>
         <span>&#x2191; ${run.ascent} m</span>
+        <button class="btn-elev" title="Show elevation profile">&#9651; profile</button>
       </div>
       ${photosNote}
       ${notes}
@@ -120,9 +140,9 @@ async function loadAllTracks(runs) {
     const gpxLayer = new L.GPX(run.gpx, {
       async: true,
       polyline_options: {
-        color: TRACK_DIM_COLOR,
-        weight: TRACK_DIM_WEIGHT,
-        opacity: 0.7
+        color: runColors[run.id],
+        weight: TRACK_WEIGHT,
+        opacity: 0.85
       },
       marker_options: {
         startIconUrl: null,
@@ -150,43 +170,26 @@ async function loadAllTracks(runs) {
   }
 }
 
-// ── Select a run ──────────────────────────────────────────────────────────
-async function selectRun(run) {
-  // Deselect previous
-  if (selectedId && trackLayers[selectedId]) {
-    setTrackStyle(trackLayers[selectedId], TRACK_DIM_COLOR, TRACK_DIM_WEIGHT, 0.7);
-  }
-  document.querySelectorAll('.run-card').forEach(c => c.classList.remove('selected'));
-
-  selectedId = run.id;
-
-  // Highlight card
+// ── Toggle a run on/off ────────────────────────────────────────────────────
+function toggleRun(run) {
   const card = document.querySelector(`.run-card[data-id="${run.id}"]`);
-  if (card) {
-    card.classList.add('selected');
-    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
 
-  // Highlight track
-  if (trackLayers[run.id]) {
-    setTrackStyle(trackLayers[run.id], TRACK_COLOR, TRACK_WEIGHT, 1);
-    map.fitBounds(trackLayers[run.id].getBounds(), { padding: [50, 50] });
-    // Bring to front
-    trackLayers[run.id].bringToFront();
-  }
-
-  // Elevation profile
-  await showElevationProfile(run);
-
-  // Photos in card
-  if (run.photos && run.photos.length > 0) {
-    renderPhotosInCard(run);
+  if (activeIds.has(run.id)) {
+    activeIds.delete(run.id);
+    card?.classList.add('inactive');
+    setTrackOpacity(trackLayers[run.id], 0);
+  } else {
+    activeIds.add(run.id);
+    card?.classList.remove('inactive');
+    setTrackOpacity(trackLayers[run.id], 0.85);
+    if (run.photos && run.photos.length > 0) renderPhotosInCard(run);
   }
 }
 
-function setTrackStyle(gpxLayer, color, weight, opacity) {
-  gpxLayer.getLayers().forEach(l => {
-    if (l.setStyle) l.setStyle({ color, weight, opacity });
+function setTrackOpacity(layer, opacity) {
+  if (!layer) return;
+  layer.getLayers().forEach(l => {
+    if (l.setStyle) l.setStyle({ opacity });
   });
 }
 
@@ -303,17 +306,31 @@ function renderElevationChart(points) {
 
   chartState = { points, maxD, minEle, range, pad, w, h, X, Y };
 
-  document.getElementById('chart-overlay').addEventListener('mousemove', onChartMouseMove);
-  document.getElementById('chart-overlay').addEventListener('mouseleave', onChartMouseLeave);
+  const overlay = document.getElementById('chart-overlay');
+  overlay.addEventListener('mousemove',  onChartMouseMove);
+  overlay.addEventListener('mouseleave', onChartMouseLeave);
+  overlay.addEventListener('touchstart', onChartTouch, { passive: false });
+  overlay.addEventListener('touchmove',  onChartTouch, { passive: false });
+  overlay.addEventListener('touchend',   onChartMouseLeave);
+}
+
+function onChartTouch(e) {
+  e.preventDefault();
+  const touch = e.touches[0];
+  if (touch) onChartMoveAt(touch.clientX, touch.clientY);
 }
 
 function onChartMouseMove(e) {
+  onChartMoveAt(e.clientX, e.clientY);
+}
+
+function onChartMoveAt(clientX, clientY) {
   if (!chartState) return;
   const { points, maxD, minEle, range, pad, w, h, X, Y } = chartState;
 
   const svg = document.getElementById('elevation-chart');
   const pt  = svg.createSVGPoint();
-  pt.x = e.clientX; pt.y = e.clientY;
+  pt.x = clientX; pt.y = clientY;
   const svgX = Math.max(pad.left, Math.min(pad.left + w,
     pt.matrixTransform(svg.getScreenCTM().inverse()).x));
 

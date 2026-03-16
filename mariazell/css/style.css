@@ -99,22 +99,21 @@ body {
 .run-card {
   background: #fff;
   border: 1.5px solid #ececea;
+  border-left: 4px solid var(--track-c, #ddd);
   border-radius: 10px;
   padding: 12px 14px;
   margin-bottom: 8px;
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  transition: box-shadow 0.15s, opacity 0.2s;
 }
 
 .run-card:hover {
-  border-color: #d95a18;
-  box-shadow: 0 2px 10px rgba(217, 90, 24, 0.12);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
-.run-card.selected {
-  border-color: #d95a18;
-  background: #fff9f6;
-  box-shadow: 0 3px 14px rgba(217, 90, 24, 0.18);
+.run-card.inactive {
+  opacity: 0.38;
+  border-left-color: #ccc !important;
 }
 
 .run-card-header {
@@ -149,9 +148,28 @@ body {
 .run-stats {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px 12px;
   font-size: 0.75rem;
   color: #777;
+}
+
+.btn-elev {
+  margin-left: auto;
+  background: none;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 0.7rem;
+  color: #aaa;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.btn-elev:hover {
+  color: var(--track-c, #555);
+  border-color: var(--track-c, #aaa);
 }
 
 .run-notes {
@@ -285,21 +303,88 @@ body {
   box-shadow: 0 8px 40px rgba(0,0,0,0.4);
 }
 
+/* ── Sidebar handle (mobile only) ── */
+#sidebar-handle {
+  display: none;
+}
+
 /* ── Responsive ── */
-@media (max-width: 640px) {
-  #lifetime-stats { gap: 12px; }
-  .stat { font-size: 0.75rem; }
+@media (max-width: 767px) {
+  /* Compact top bar */
+  #top-bar { padding: 0 14px; }
+  #brand { font-size: 1rem; }
+  #lifetime-stats { gap: 14px; }
+  .stat { font-size: 0.76rem; }
+  .stat strong { font-size: 0.88rem; }
+
+  /* Map fills the whole main area */
+  #main { position: relative; }
+  #map-container { flex: 1; }
+
+  /* Sidebar becomes a fixed bottom sheet */
   #sidebar {
-    width: 100%;
-    min-width: unset;
-    position: absolute;
+    position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    max-height: 42vh;
-    z-index: 200;
+    width: 100%;
+    min-width: unset;
+    height: 56vh;
     border-right: none;
-    border-top: 1px solid #e4e4e0;
+    border-top: none;
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -3px 18px rgba(0,0,0,0.13);
+    z-index: 500;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    /* Collapsed: only the handle (48px) is visible */
+    transform: translateY(calc(100% - 48px));
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  #map-container { flex: 1; }
+
+  #sidebar.open {
+    transform: translateY(0);
+  }
+
+  /* Handle bar (drag indicator + label) */
+  #sidebar-handle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 48px;
+    flex-shrink: 0;
+    cursor: pointer;
+    border-bottom: 1px solid #ececea;
+    background: #fff;
+    border-radius: 14px 14px 0 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .handle-bar {
+    width: 38px;
+    height: 4px;
+    background: #ddd;
+    border-radius: 2px;
+  }
+
+  #sidebar-handle-label {
+    font-size: 0.72rem;
+    color: #aaa;
+    letter-spacing: 0.2px;
+  }
+
+  #run-list {
+    overflow-y: auto;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Elevation panel sits above the collapsed handle */
+  #elevation-panel {
+    bottom: 48px;
+    z-index: 600;
+  }
 }
