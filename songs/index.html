@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Music Lyrics Library</title>
+    <title>My Music</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🎵 My Music Lyrics Library</h1>
+            <h1>🎵 My Music</h1>
             <button id="menuBtn" class="menu-btn">☰</button>
         </header>
 
@@ -24,6 +24,9 @@
                 </a>
                 <a id="driveFolderLink" target="_blank" class="upload-label" style="text-decoration: none;">
                     📂 Open Google Drive Folder
+                </a>
+                <a href="hand.html?debug" class="upload-label" style="text-decoration: none;">
+                    👋 Practice Gestures
                 </a>
                 <label for="excelUpload" class="upload-label">
                     📁 Load Local File (Excel/CSV)
@@ -84,7 +87,7 @@
         </div>
 
         <div id="songList" class="song-grid">
-            <p class="empty-state">Upload an Excel file to get started</p>
+            <p class="empty-state">Loading song data ...</p>
         </div>
     </div>
 

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Gesture Recognition</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/hand.css">
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="js/playtones.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 id="pageTitle">👋 Hand Gesture Recognition</h1>
+            <div id="songMetadata" class="song-metadata" style="display:none;"></div>
+        </header>
+
+        <div class="button-ribbon">
+            <button id="backButton" class="ribbon-button">← Back</button>
+            <button id="countInButton" class="ribbon-button">🥁 Count In</button>
+            <button id="editButton" class="ribbon-button" style="display:none;">✏️ Edit</button>
+            <button id="cameraToggle" class="ribbon-button">⏸️ Pause Camera</button>
+        </div>
+
+        <div class="top-row">
+            <div class="video-container">
+                <video id="videoElement" autoplay playsinline muted></video>
+                <canvas id="canvasElement"></canvas>
+            </div>
+
+            <div class="detection-display">
+                <div class="finger-count" id="fingerCount">-</div>
+                <div class="status" id="statusText">Initializing camera...</div>
+            </div>
+
+            <div class="info-box">
+                <p><strong>Instructions:</strong> Show your hand to the camera. Use 3 fingers for next, 4 fingers for previous.</p>
+                <div style="margin-top: 10px;">
+                    <label for="songSelect" style="font-weight: bold; margin-right: 10px;">Song:</label>
+                    <select id="songSelect" style="padding: 5px 10px; border-radius: 5px; border: 2px solid #667eea; font-size: 14px;">
+                        <option value="wonderwall">Wonderwall - Oasis</option>
+                        <option value="bohemian-rhapsody">Bohemian Rhapsody - Queen</option>
+                        <option value="hotel-california">Hotel California - Eagles</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="selection-boxes" id="selectionBoxes">
+            <!-- Boxes will be dynamically generated -->
+        </div>
+
+        <div class="chunk-viewer" id="chunkViewer">
+            <div class="chunk-content" id="chunkContent">
+                <p>Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/hand.js"></script>
+</body>
+</html>
+    

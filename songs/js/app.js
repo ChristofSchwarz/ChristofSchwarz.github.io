@@ -7,7 +7,34 @@ let config = {};
 document.addEventListener('DOMContentLoaded', async () => {
     await loadConfig();
     setupEventListeners();
-    loadFromGoogleSheets();
+    
+    // Check for cached data first
+    const cachedData = localStorage.getItem('songsData');
+    if (cachedData) {
+        try {
+            // Immediately load and display cached data
+            songsData = JSON.parse(cachedData);
+            allSongs = [...songsData];
+            populateFilters();
+            restoreFilterState();
+            filterSongs();
+            
+            const cachedTimestamp = localStorage.getItem('songsDataTimestamp');
+            const cacheAge = cachedTimestamp ? Date.now() - parseInt(cachedTimestamp) : 0;
+            const cacheAgeMinutes = Math.floor(cacheAge / 60000);
+            document.getElementById('fileStatus').textContent = `✓ ${songsData.length} songs (cached ${cacheAgeMinutes}m ago)`;
+            
+            // Load fresh data in background
+            loadFromGoogleSheetsBackground();
+        } catch (error) {
+            console.error('Error loading cached data:', error);
+            // If cache fails, load normally
+            loadFromGoogleSheets();
+        }
+    } else {
+        // No cache, load normally
+        loadFromGoogleSheets();
+    }
 });
 
 // Load configuration from config.json
@@ -475,24 +502,55 @@ async function displaySongs(songs) {
 }
 
 function openSong(index) {
-    // Save selected song index
+    const song = allSongs[index];
+    
+    // Store complete song data in localStorage
+    localStorage.setItem('selectedSong', JSON.stringify(song));
     localStorage.setItem('selectedSongIndex', index);
     
-    // Save current filter state
-    const filterState = {
-        searchTerm: document.getElementById('searchInput').value,
-        sortBy: document.getElementById('sortBy').value,
-        interpret: document.getElementById('filterInterpret').value,
-        yearMin: document.getElementById('yearMin').value,
-        yearMax: document.getElementById('yearMax').value,
-        key: document.getElementById('filterKey').value,
-        instrumental: document.getElementById('filterInstrumental').value,
-        bpmMin: document.getElementById('bpmMin').value,
-        bpmMax: document.getElementById('bpmMax').value
-    };
-    localStorage.setItem('filterState', JSON.stringify(filterState));
-    
-    window.location.href = 'song.html';
+    // Check if song has a lyrics file (could be local or Google Sheet URL)
+    if (song.lyricsFile) {
+        // Check if it's a URL (Google Sheet/Doc) or local file
+        if (song.lyricsFile.startsWith('http://') || song.lyricsFile.startsWith('https://')) {
+            // Pass index to hand.html
+            window.location.href = `hand.html?index=${index}`;
+        } else {
+            // Local file - fallback to old song.html page
+            // Save current filter state
+            const filterState = {
+                searchTerm: document.getElementById('searchInput').value,
+                sortBy: document.getElementById('sortBy').value,
+                interpret: document.getElementById('filterInterpret').value,
+                yearMin: document.getElementById('yearMin').value,
+                yearMax: document.getElementById('yearMax').value,
+                key: document.getElementById('filterKey').value,
+                instrumental: document.getElementById('filterInstrumental').value,
+                bpmMin: document.getElementById('bpmMin').value,
+                bpmMax: document.getElementById('bpmMax').value
+            };
+            localStorage.setItem('filterState', JSON.stringify(filterState));
+            
+            window.location.href = 'song.html';
+        }
+    } else {
+        // No lyrics file - fallback to old song.html page
+        
+        // Save current filter state
+        const filterState = {
+            searchTerm: document.getElementById('searchInput').value,
+            sortBy: document.getElementById('sortBy').value,
+            interpret: document.getElementById('filterInterpret').value,
+            yearMin: document.getElementById('yearMin').value,
+            yearMax: document.getElementById('yearMax').value,
+            key: document.getElementById('filterKey').value,
+            instrumental: document.getElementById('filterInstrumental').value,
+            bpmMin: document.getElementById('bpmMin').value,
+            bpmMax: document.getElementById('bpmMax').value
+        };
+        localStorage.setItem('filterState', JSON.stringify(filterState));
+        
+        window.location.href = 'song.html';
+    }
 }
 
 async function loadFromGoogleSheets() {
@@ -520,6 +578,63 @@ async function loadFromGoogleSheets() {
         
         // Fallback to localStorage if available
         loadSavedData();
+    }
+}
+
+// Load from Google Sheets in background and update if data changed
+async function loadFromGoogleSheetsBackground() {
+    try {
+        const googleSheetsUrl = config.googleSheetsUrl || 'https://docs.google.com/spreadsheets/d/1nJVZRkxuoC8G8dklkVRlNb9aIIYBG-l-Nl-LaGh5MwQ/export?format=csv';
+        const response = await fetch(googleSheetsUrl);
+        if (!response.ok) {
+            throw new Error('Failed to fetch Google Sheets data');
+        }
+        
+        const csvText = await response.text();
+        const jsonData = parseCSV(csvText);
+        
+        // Compare with current data
+        const currentDataStr = JSON.stringify(songsData);
+        
+        // Create temporary processed data for comparison
+        const tempData = jsonData.map(row => {
+            const normalized = {};
+            Object.keys(row).forEach(key => {
+                const lowerKey = key.toLowerCase().trim();
+                normalized[lowerKey] = row[key];
+            });
+            
+            return {
+                songName: normalized['song name'] || normalized['songname'] || normalized['title'] || '',
+                interpret: normalized['interpret'] || normalized['artist'] || '',
+                year: normalized['year'] || normalized['year of release'] || '',
+                key: normalized['key'] || '',
+                bpm: normalized['bpm'] || '',
+                beat: normalized['beat'] || '',
+                instrumental: normalized['instrumental'] || '',
+                originalLink: normalized['link to original song'] || normalized['original'] || normalized['originallink'] || '',
+                karaokeLink: normalized['link to karaoke version'] || normalized['karaoke'] || normalized['karaokelink'] || '',
+                lyricsFile: normalized['lyrics file'] || normalized['lyricsfile'] || normalized['file'] || '',
+                lyricsValid: null
+            };
+        });
+        
+        const newDataStr = JSON.stringify(tempData);
+        
+        if (currentDataStr !== newDataStr) {
+            // Data has changed, update
+            console.log('Background refresh: Data changed, updating...');
+            await processSongsData(jsonData);
+            document.getElementById('fileStatus').textContent = `✓ ${jsonData.length} songs (refreshed)`;
+        } else {
+            console.log('Background refresh: No changes detected');
+            // Update timestamp even though data hasn't changed
+            localStorage.setItem('songsDataTimestamp', Date.now().toString());
+        }
+        
+    } catch (error) {
+        console.error('Background refresh failed:', error);
+        // Silently fail - user already has cached data displayed
     }
 }
 
