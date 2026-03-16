@@ -1,13 +1,14 @@
 // ── Config ────────────────────────────────────────────────────────────────
-const TRAIL_COLORS = ['#d95a18', '#2e7dd1', '#2da44e']; // orange, blue, green
+const TRAIL_COLORS = ['#d95a18', '#9e3509']; // warm orange, dark burnt orange
 const TRACK_WEIGHT = 3.5;
 
 // ── State ─────────────────────────────────────────────────────────────────
 let map;
 let runsData    = [];
 let trackLayers = {};    // id → L.GPX layer
-let runColors   = {};    // id → color string
-let activeIds   = new Set();
+let runColors      = {};    // id → color (stable, by original JSON order)
+let activeIds      = new Set();
+let finishMarkers  = {};    // id → L.Marker
 let elevationCache = {};
 let chartState     = null;
 let hoverMarker    = null;
@@ -16,10 +17,23 @@ let hoverMarker    = null;
 async function init() {
   map = L.map('map', { zoomControl: true });
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 19
-  }).addTo(map);
+  const baseLayers = {
+    'Street': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19
+    }),
+    'Satellite': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, GIS User Community',
+      maxZoom: 19
+    }),
+    'Topo': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
+      maxZoom: 17
+    })
+  };
+
+  baseLayers['Street'].addTo(map);
+  L.control.layers(baseLayers, null, { position: 'topright', collapsed: false }).addTo(map);
 
   // Set a sensible default view (Austria) before tracks load
   map.setView([47.8, 15.1], 9);
@@ -34,7 +48,6 @@ async function init() {
 
   runsData = runs;
 
-  // Assign a color to every run before rendering cards
   runs.forEach((run, i) => {
     runColors[run.id] = TRAIL_COLORS[i % TRAIL_COLORS.length];
     activeIds.add(run.id);
@@ -91,11 +104,6 @@ function renderRunList(runs) {
       const run = runsData.find(r => r.id === card.dataset.id);
       if (run) toggleRun(run);
     });
-    card.querySelector('.btn-elev').addEventListener('click', e => {
-      e.stopPropagation();
-      const run = runsData.find(r => r.id === card.dataset.id);
-      if (run) showElevationProfile(run);
-    });
   });
 }
 
@@ -113,9 +121,8 @@ function runCardHTML(run) {
     : '';
 
   const color = runColors[run.id] || TRAIL_COLORS[0];
-
   return `
-    <div class="run-card" data-id="${run.id}" style="--track-c:${color}">
+    <div class="run-card" data-id="${run.id}" style="border-left-color:${color}">
       <div class="run-card-header">
         <span class="run-date">${dateStr}</span>
         <span class="run-distance">${km} km</span>
@@ -125,7 +132,6 @@ function runCardHTML(run) {
         <span>&#x23F1; ${dur}</span>
         <span>&#x26A1; ${pace}/km</span>
         <span>&#x2191; ${run.ascent} m</span>
-        <button class="btn-elev" title="Show elevation profile">&#9651; profile</button>
       </div>
       ${photosNote}
       ${notes}
@@ -155,6 +161,7 @@ async function loadAllTracks(runs) {
       trackLayers[run.id] = gpxLayer;
       const b = e.target.getBounds();
       if (b.isValid()) allBounds.push(b);
+
       resolve();
     });
 
@@ -168,6 +175,12 @@ async function loadAllTracks(runs) {
     const combined = allBounds.reduce((acc, b) => acc.extend(b));
     map.fitBounds(combined, { padding: [30, 30] });
   }
+
+  // Add finish flags (reuses parseGPXElevation which also primes the cache)
+  for (const run of runs) {
+    addFinishMarker(run);
+  }
+  updateElevationChart();
 }
 
 // ── Toggle a run on/off ────────────────────────────────────────────────────
@@ -178,12 +191,15 @@ function toggleRun(run) {
     activeIds.delete(run.id);
     card?.classList.add('inactive');
     setTrackOpacity(trackLayers[run.id], 0);
+    if (finishMarkers[run.id]) finishMarkers[run.id].setOpacity(0);
   } else {
     activeIds.add(run.id);
     card?.classList.remove('inactive');
     setTrackOpacity(trackLayers[run.id], 0.85);
+    if (finishMarkers[run.id]) finishMarkers[run.id].setOpacity(1);
     if (run.photos && run.photos.length > 0) renderPhotosInCard(run);
   }
+  updateElevationChart();
 }
 
 function setTrackOpacity(layer, opacity) {
@@ -193,18 +209,79 @@ function setTrackOpacity(layer, opacity) {
   });
 }
 
-// ── Elevation profile ─────────────────────────────────────────────────────
-async function showElevationProfile(run) {
+async function addFinishMarker(run) {
+  // Re-use elevation cache — it has lat/lon per point
   if (!elevationCache[run.id]) {
     elevationCache[run.id] = await parseGPXElevation(run.gpx);
   }
-  const points = elevationCache[run.id];
-  if (!points.length) return;
+  const pts = elevationCache[run.id];
+  if (!pts.length) return;
 
-  document.getElementById('elevation-title').textContent =
-    run.title + ' — Elevation Profile';
+  const last = pts[pts.length - 1];
+  const color = runColors[run.id] || TRAIL_COLORS[0];
+  const flagSvg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="24" viewBox="0 0 18 24">
+      <line x1="3" y1="1" x2="3" y2="23" stroke="#555" stroke-width="1.5" stroke-linecap="round"/>
+      <polygon points="3,1 16,6 3,12" fill="${color}" stroke="${color}" stroke-linejoin="round"/>
+    </svg>`;
+
+  const marker = L.marker([last.lat, last.lon], {
+    icon: L.divIcon({
+      html: flagSvg,
+      className: 'finish-flag',
+      iconSize:   [18, 24],
+      iconAnchor: [3, 23]   // tip of the pole
+    }),
+    zIndexOffset: 500
+  }).addTo(map);
+
+  finishMarkers[run.id] = marker;
+}
+
+// ── Elevation profile — all active segments combined ──────────────────────
+async function updateElevationChart() {
+  // Use chronological order as the natural left-to-right sequence
+  const ordered = runsData.slice().sort((a, b) => a.date.localeCompare(b.date));
+
+  // Ensure all elevation data is loaded
+  for (const run of ordered) {
+    if (!elevationCache[run.id]) {
+      elevationCache[run.id] = await parseGPXElevation(run.gpx);
+    }
+  }
+
+  // Build segments with cumulative distance offsets
+  let offset = 0;
+  const segments = ordered.map(run => {
+    const pts     = elevationCache[run.id] || [];
+    const runDist = pts.length ? pts[pts.length - 1].d : run.distance / 1000;
+    const seg     = { run, pts, active: activeIds.has(run.id),
+                      offset, color: runColors[run.id] || TRAIL_COLORS[0] };
+    offset += runDist;
+    return seg;
+  });
+
+  const activeSegs = segments.filter(s => s.active && s.pts.length);
+  if (!activeSegs.length) return;
+
+  // Zoom X-axis to the span of active segments
+  const visStart = activeSegs[0].offset;
+  const lastSeg  = activeSegs[activeSegs.length - 1];
+  const visEnd   = lastSeg.offset + lastSeg.pts[lastSeg.pts.length - 1].d;
+
+  const allEles  = activeSegs.flatMap(s => s.pts.map(p => p.ele));
+  const minEle   = Math.min(...allEles);
+  const maxEle   = Math.max(...allEles);
+
+  const title = activeSegs.length === 1
+    ? activeSegs[0].run.title + ' — Elevation Profile'
+    : 'Elevation Profile — ' + activeSegs.map(s => s.run.title).join(', ');
+  document.getElementById('elevation-title').textContent = title;
   document.getElementById('elevation-panel').classList.remove('hidden');
-  renderElevationChart(points);
+
+  requestAnimationFrame(() =>
+    renderMultiElevationChart(segments, visStart, visEnd, minEle, maxEle)
+  );
 }
 
 async function parseGPXElevation(gpxUrl) {
@@ -238,73 +315,73 @@ async function parseGPXElevation(gpxUrl) {
   }
 }
 
-function renderElevationChart(points) {
-  // Fixed logical coordinate space; SVG scales via CSS width:100%
+function renderMultiElevationChart(segments, visStart, visEnd, minEle, maxEle) {
   const VW = 800, VH = 110;
   const pad = { top: 8, right: 18, bottom: 24, left: 42 };
   const w = VW - pad.left - pad.right;
   const h = VH - pad.top  - pad.bottom;
 
-  const maxD   = points[points.length - 1].d;
-  const eles   = points.map(p => p.ele);
-  const minEle = Math.min(...eles);
-  const maxEle = Math.max(...eles);
-  const range  = maxEle - minEle || 1;
+  const visRange = visEnd - visStart;
+  const eleRange = maxEle - minEle || 1;
 
-  const X = d   => pad.left + (d / maxD)  * w;
-  const Y = ele => pad.top  + h - ((ele - minEle) / range) * h;
+  const X = d   => pad.left + ((d - visStart) / visRange) * w;
+  const Y = ele => pad.top  + h - ((ele - minEle) / eleRange) * h;
 
-  // Polyline path
-  const linePath = points
-    .map((p, i) => `${i === 0 ? 'M' : 'L'}${X(p.d).toFixed(1)},${Y(p.ele).toFixed(1)}`)
-    .join(' ');
+  // Gradient defs per active segment
+  const defs = segments.filter(s => s.active).map((s, i) => `
+    <linearGradient id="eg${i}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="${s.color}" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="${s.color}" stop-opacity="0.02"/>
+    </linearGradient>`).join('');
 
-  // Filled area
-  const last = points[points.length - 1];
-  const areaPath = linePath
-    + ` L${X(last.d).toFixed(1)},${(pad.top + h).toFixed(1)}`
-    + ` L${X(0).toFixed(1)},${(pad.top + h).toFixed(1)} Z`;
-
-  // Distance axis labels (6 ticks)
-  const distTicks = Array.from({ length: 6 }, (_, i) => {
-    const d = (maxD / 5) * i;
-    return `<text x="${X(d).toFixed(1)}" y="${VH - 5}" text-anchor="middle" class="chart-label">${d.toFixed(1)}km</text>`;
-  }).join('');
-
-  // Elevation axis labels (3 ticks)
-  const eleTicks = [minEle, (minEle + maxEle) / 2, maxEle].map(e => {
-    return `<text x="${pad.left - 4}" y="${Y(e).toFixed(1)}" text-anchor="end" dominant-baseline="middle" class="chart-label">${Math.round(e)}m</text>`;
-  }).join('');
+  // Draw each active segment independently (gaps where inactive)
+  let paths = '', gi = 0;
+  for (const seg of segments) {
+    if (!seg.active || !seg.pts.length) { continue; }
+    const line = seg.pts
+      .map((p, i) => `${i === 0 ? 'M' : 'L'}${X(seg.offset + p.d).toFixed(1)},${Y(p.ele).toFixed(1)}`)
+      .join(' ');
+    const first = seg.pts[0], last = seg.pts[seg.pts.length - 1];
+    const area  = line
+      + ` L${X(seg.offset + last.d).toFixed(1)},${(pad.top + h).toFixed(1)}`
+      + ` L${X(seg.offset + first.d).toFixed(1)},${(pad.top + h).toFixed(1)} Z`;
+    paths += `<path d="${area}" fill="url(#eg${gi})"/>`;
+    paths += `<path d="${line}" fill="none" stroke="${seg.color}" stroke-width="1.8" stroke-linejoin="round"/>`;
+    gi++;
+  }
 
   // Grid lines
-  const gridLines = [minEle, (minEle + maxEle) / 2, maxEle].map(e => {
-    const y = Y(e).toFixed(1);
-    return `<line x1="${pad.left}" y1="${y}" x2="${pad.left + w}" y2="${y}" stroke="#f0efed" stroke-width="1"/>`;
+  const gridLines = [minEle, (minEle + maxEle) / 2, maxEle].map(e =>
+    `<line x1="${pad.left}" y1="${Y(e).toFixed(1)}" x2="${pad.left+w}" y2="${Y(e).toFixed(1)}" stroke="#f0efed" stroke-width="1"/>`
+  ).join('');
+
+  // Distance axis (6 ticks across visible range)
+  const distTicks = Array.from({ length: 6 }, (_, i) => {
+    const d = visStart + (visRange / 5) * i;
+    return `<text x="${X(d).toFixed(1)}" y="${VH-5}" text-anchor="middle" class="chart-label">${d.toFixed(1)}km</text>`;
   }).join('');
 
-  const svg = document.getElementById('elevation-chart');
-  svg.innerHTML = `
-    <defs>
-      <linearGradient id="eg" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%"   stop-color="${TRACK_COLOR}" stop-opacity="0.35"/>
-        <stop offset="100%" stop-color="${TRACK_COLOR}" stop-opacity="0.03"/>
-      </linearGradient>
-    </defs>
+  // Elevation axis
+  const eleTicks = [minEle, (minEle + maxEle) / 2, maxEle].map(e =>
+    `<text x="${pad.left-4}" y="${Y(e).toFixed(1)}" text-anchor="end" dominant-baseline="middle" class="chart-label">${Math.round(e)}m</text>`
+  ).join('');
+
+  document.getElementById('elevation-chart').innerHTML = `
+    <defs>${defs}</defs>
     ${gridLines}
-    <path d="${areaPath}" fill="url(#eg)"/>
-    <path d="${linePath}" fill="none" stroke="${TRACK_COLOR}" stroke-width="1.8" stroke-linejoin="round"/>
-    <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top + h}" stroke="#ddd" stroke-width="1"/>
-    <line x1="${pad.left}" y1="${pad.top + h}" x2="${pad.left + w}" y2="${pad.top + h}" stroke="#ddd" stroke-width="1"/>
+    ${paths}
+    <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top+h}" stroke="#ddd" stroke-width="1"/>
+    <line x1="${pad.left}" y1="${pad.top+h}" x2="${pad.left+w}" y2="${pad.top+h}" stroke="#ddd" stroke-width="1"/>
     ${eleTicks}
     ${distTicks}
-    <line id="needle-line" x1="0" y1="${pad.top}" x2="0" y2="${pad.top + h}"
-      stroke="${TRACK_COLOR}" stroke-width="1.2" stroke-dasharray="3,2" opacity="0" pointer-events="none"/>
+    <line id="needle-line" x1="0" y1="${pad.top}" x2="0" y2="${pad.top+h}"
+      stroke="#666" stroke-width="1.2" stroke-dasharray="3,2" opacity="0" pointer-events="none"/>
     <circle id="needle-dot" cx="0" cy="0" r="4"
-      fill="${TRACK_COLOR}" stroke="#fff" stroke-width="1.5" opacity="0" pointer-events="none"/>
+      fill="#666" stroke="#fff" stroke-width="1.5" opacity="0" pointer-events="none"/>
     <rect id="chart-overlay" x="${pad.left}" y="${pad.top}" width="${w}" height="${h}" fill="transparent" cursor="crosshair"/>
   `;
 
-  chartState = { points, maxD, minEle, range, pad, w, h, X, Y };
+  chartState = { segments, visStart, visRange, minEle, eleRange, pad, w, h, X, Y };
 
   const overlay = document.getElementById('chart-overlay');
   overlay.addEventListener('mousemove',  onChartMouseMove);
@@ -326,7 +403,7 @@ function onChartMouseMove(e) {
 
 function onChartMoveAt(clientX, clientY) {
   if (!chartState) return;
-  const { points, maxD, minEle, range, pad, w, h, X, Y } = chartState;
+  const { segments, visStart, visRange, pad, w, X, Y } = chartState;
 
   const svg = document.getElementById('elevation-chart');
   const pt  = svg.createSVGPoint();
@@ -334,32 +411,38 @@ function onChartMoveAt(clientX, clientY) {
   const svgX = Math.max(pad.left, Math.min(pad.left + w,
     pt.matrixTransform(svg.getScreenCTM().inverse()).x));
 
-  const d = (svgX - pad.left) / w * maxD;
+  // Convert SVG x → cumulative distance
+  const d = visStart + (svgX - pad.left) / w * visRange;
 
-  // Find nearest point by distance along track
-  let nearest = points[0], minDiff = Infinity;
-  for (const p of points) {
-    const diff = Math.abs(p.d - d);
-    if (diff < minDiff) { minDiff = diff; nearest = p; }
+  // Find nearest point across all active segments
+  let nearest = null, nearestSeg = null, minDiff = Infinity;
+  for (const seg of segments) {
+    if (!seg.active || !seg.pts.length) continue;
+    for (const p of seg.pts) {
+      const diff = Math.abs(seg.offset + p.d - d);
+      if (diff < minDiff) { minDiff = diff; nearest = p; nearestSeg = seg; }
+    }
   }
+  if (!nearest) return;
 
-  const nx = X(nearest.d).toFixed(1);
-  const ny = Y(nearest.ele).toFixed(1);
+  const nx    = X(nearestSeg.offset + nearest.d).toFixed(1);
+  const ny    = Y(nearest.ele).toFixed(1);
+  const color = nearestSeg.color;
 
-  // Move needle
   const line = document.getElementById('needle-line');
   const dot  = document.getElementById('needle-dot');
-  line.setAttribute('x1', nx); line.setAttribute('x2', nx); line.setAttribute('opacity', '1');
-  dot.setAttribute('cx', nx);  dot.setAttribute('cy', ny);  dot.setAttribute('opacity', '1');
+  line.setAttribute('x1', nx); line.setAttribute('x2', nx);
+  line.setAttribute('stroke', color); line.setAttribute('opacity', '1');
+  dot.setAttribute('cx', nx);  dot.setAttribute('cy', ny);
+  dot.setAttribute('fill', color); dot.setAttribute('opacity', '1');
 
-  // Move map marker
   if (!hoverMarker) {
     hoverMarker = L.circleMarker([nearest.lat, nearest.lon], {
-      radius: 7, color: '#fff', fillColor: TRACK_COLOR,
-      fillOpacity: 1, weight: 2
+      radius: 7, color: '#fff', fillColor: color, fillOpacity: 1, weight: 2
     }).addTo(map);
   } else {
     hoverMarker.setLatLng([nearest.lat, nearest.lon]);
+    hoverMarker.setStyle({ fillColor: color });
     if (!map.hasLayer(hoverMarker)) hoverMarker.addTo(map);
   }
 }
