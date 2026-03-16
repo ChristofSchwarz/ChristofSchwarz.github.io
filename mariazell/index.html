@@ -21,7 +21,10 @@
       <aside id="sidebar">
         <div id="sidebar-handle" aria-label="Toggle run list">
           <div class="handle-bar"></div>
-          <span id="sidebar-handle-label"></span>
+          <div class="handle-row">
+            <span id="sidebar-handle-label"></span>
+            <span id="sidebar-toggle-arrow">&#9650;</span>
+          </div>
         </div>
         <div id="sidebar-toolbar">
           <label id="sort-label">
@@ -30,6 +33,9 @@
           </label>
         </div>
         <div id="run-list"></div>
+        <div id="elev-sidebar-toggle">
+          <button id="elev-toggle-btn">&#9651; Show elevation diagram</button>
+        </div>
       </aside>
       <div id="map-container">
         <div id="map"></div>
@@ -38,11 +44,13 @@
             <span id="elevation-title"></span>
             <button id="elevation-close">&#x2715;</button>
           </div>
-          <svg id="elevation-chart" viewBox="0 0 800 110" preserveAspectRatio="none"></svg>
+          <svg id="elevation-chart"></svg>
         </div>
       </div>
     </div>
   </div>
+
+  <button id="elev-mobile-reopen">&#9651; Elevation</button>
 
   <div id="photo-modal" class="hidden">
     <div id="photo-modal-backdrop"></div>

@@ -26,10 +26,6 @@ async function init() {
       attribution: 'Tiles &copy; Esri &mdash; Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, GIS User Community',
       maxZoom: 19
     }),
-    'Topo': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-      attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
-      maxZoom: 17
-    })
   };
 
   baseLayers['Street'].addTo(map);
@@ -61,13 +57,18 @@ async function init() {
   });
   await loadAllTracks(runsData);
 
-  // Wire up UI events
-  document.getElementById('elevation-close').addEventListener('click', () => {
-    document.getElementById('elevation-panel').classList.add('hidden');
-  });
+  // Wire up elevation show/hide controls
+  document.getElementById('elevation-close').addEventListener('click',       () => setElevationVisible(false));
+  document.getElementById('elev-toggle-btn').addEventListener('click',       () => setElevationVisible(document.getElementById('elevation-panel').classList.contains('hidden')));
+  document.getElementById('elev-mobile-reopen').addEventListener('click',   () => setElevationVisible(true));
 
   document.getElementById('photo-modal-backdrop').addEventListener('click', closePhotoModal);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePhotoModal(); });
+
+  // Re-render chart at correct size when window is resized
+  window.addEventListener('resize', () => {
+    if (chartState) updateElevationChart();
+  });
 
   // Mobile sidebar toggle
   document.getElementById('sidebar-handle').addEventListener('click', () => {
@@ -180,7 +181,8 @@ async function loadAllTracks(runs) {
   for (const run of runs) {
     addFinishMarker(run);
   }
-  updateElevationChart();
+  await updateElevationChart();
+  setElevationVisible(true);
 }
 
 // ── Toggle a run on/off ────────────────────────────────────────────────────
@@ -238,6 +240,23 @@ async function addFinishMarker(run) {
   finishMarkers[run.id] = marker;
 }
 
+// ── Elevation visibility helpers ──────────────────────────────────────────
+function setElevationVisible(visible) {
+  const panel      = document.getElementById('elevation-panel');
+  const toggleBtn  = document.getElementById('elev-toggle-btn');
+  const mobileBtn  = document.getElementById('elev-mobile-reopen');
+
+  if (visible) {
+    panel.classList.remove('hidden');
+    if (toggleBtn) toggleBtn.textContent = '▽ Hide elevation diagram';
+    if (mobileBtn) mobileBtn.classList.remove('shown');
+  } else {
+    panel.classList.add('hidden');
+    if (toggleBtn) toggleBtn.textContent = '△ Show elevation diagram';
+    if (mobileBtn) mobileBtn.classList.add('shown');
+  }
+}
+
 // ── Elevation profile — all active segments combined ──────────────────────
 async function updateElevationChart() {
   // Use chronological order as the natural left-to-right sequence
@@ -277,7 +296,6 @@ async function updateElevationChart() {
     ? activeSegs[0].run.title + ' — Elevation Profile'
     : 'Elevation Profile — ' + activeSegs.map(s => s.run.title).join(', ');
   document.getElementById('elevation-title').textContent = title;
-  document.getElementById('elevation-panel').classList.remove('hidden');
 
   requestAnimationFrame(() =>
     renderMultiElevationChart(segments, visStart, visEnd, minEle, maxEle)
@@ -316,8 +334,13 @@ async function parseGPXElevation(gpxUrl) {
 }
 
 function renderMultiElevationChart(segments, visStart, visEnd, minEle, maxEle) {
-  const VW = 800, VH = 110;
-  const pad = { top: 8, right: 18, bottom: 24, left: 42 };
+  const svg = document.getElementById('elevation-chart');
+  const VW  = svg.clientWidth  || svg.parentElement.clientWidth  || 600;
+  const VH  = svg.clientHeight || svg.parentElement.clientHeight || 120;
+  svg.setAttribute('width',  VW);
+  svg.setAttribute('height', VH);
+
+  const pad = { top: 10, right: 20, bottom: 26, left: 46 };
   const w = VW - pad.left - pad.right;
   const h = VH - pad.top  - pad.bottom;
 
@@ -366,7 +389,7 @@ function renderMultiElevationChart(segments, visStart, visEnd, minEle, maxEle) {
     `<text x="${pad.left-4}" y="${Y(e).toFixed(1)}" text-anchor="end" dominant-baseline="middle" class="chart-label">${Math.round(e)}m</text>`
   ).join('');
 
-  document.getElementById('elevation-chart').innerHTML = `
+  svg.innerHTML = `
     <defs>${defs}</defs>
     ${gridLines}
     ${paths}
