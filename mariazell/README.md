@@ -1,30 +1,25 @@
-# Running to Mariazell
+# Laufen nach Mariazell
 
-The **Via Sacra** is the historic pilgrimage route from Vienna to the Basilika Mariazell in Styria — roughly 120 km through the Vienna Woods, the Triestingtal valley, and the Northern Limestone Alps. Pilgrims have walked it for centuries. We're running it.
+Die **Via Sacra** ist die historische Pilgerroute von Wien zur Basilika Mariazell in der Steiermark — rund 120 km durch den Wienerwald, das Triestingtal und die Nördlichen Kalkalpen. Pilger gehen sie seit Jahrhunderten. Wir laufen sie.
 
-## Why?
+## Warum?
 
-There's something about moving through landscape on your own two feet that no car window or train ride can replicate. The Via Sacra passes through quiet forests, small market towns, and alpine meadows before the basilica's twin towers come into view above Mariazell. Every kilometer feels earned.
+Es gibt etwas am Durchqueren von Landschaft auf eigenen Beinen, das kein Autofenster und keine Zugfahrt ersetzen kann. Die Via Sacra führt durch stille Wälder, kleine Marktgemeinden und alpine Wiesen, bevor die beiden Türme der Basilika über Mariazell sichtbar werden. Jeder Kilometer fühlt sich verdient an.
 
-The route also happens to be beautiful trail-running terrain: long forest ridges, steady climbs, and technical descents with enough asphalt connecting sections to keep the navigation honest.
+Die Strecke ist auch wunderbares Trailrunning-Terrain: lange Waldrücken, gleichmäßige Anstiege und technische Abstiege — verbunden durch genug Asphalt, um die Navigation ehrlich zu halten.
 
-It's also more fun with two. **Christof and Stefan** have been tackling the stages together, usually on a weekend, somewhere between sport and pilgrimage.
+Und zu zweit macht es noch mehr Spaß. **Christof und Stefan** bewältigen die Etappen gemeinsam, meistens an einem Wochenende — irgendwo zwischen Sport und Pilgerfahrt.
 
-## The Route
+## Die Strecke
 
-The classic Via Sacra is divided into stages. We're running each stage separately and piecing the route together over time.
+Die klassische Via Sacra ist in Etappen unterteilt. Wir laufen jede Etappe separat und setzen die Route nach und nach zusammen.
 
-| Stage | From → To | Distance |
-|-------|-----------|----------|
-| 1 | Baden / Heiligenkreuz | ~16 km |
-| 2 | Renzenhof → Hainfeld | ~19 km |
-| 3 | Hainfeld → St. Veit/Gölsen | ~30 km |
-| … | *more to come* | — |
+[[route-table]]
 
-## The Goal
+## Das Ziel
 
-To run all the way to the **Basilika Mariazell** (868 m elevation) — the final destination of the Via Sacra, and one of the most important pilgrimage sites in Central Europe.
+Bis zur **Basilika Mariazell** (868 m) zu laufen — dem Endpunkt der Via Sacra und einem der bedeutendsten Wallfahrtsorte Mitteleuropas.
 
 ---
 
-*Tracks, elevation profiles, and photos from each stage are on the [Tracks](tracks.html) page.*
+*Strecken, Höhenprofile und Fotos der einzelnen Etappen gibt es auf der Seite [Strecken](tracks.html).*

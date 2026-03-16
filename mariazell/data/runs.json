@@ -3,6 +3,8 @@
     "id": "2026-03-06-via-sacra-bis-st-veit",
     "date": "2026-03-06",
     "title": "Via Sacra Etappe 3 (St.Veit/Gölsen)",
+    "from": "Renzenhof",
+    "to": "St.Veit/Gölsen",
     "distance": 30352,
     "duration": 16017,
     "totalTime": 16017,
@@ -10,15 +12,15 @@
     "descent": 502,
     "calories": 0,
     "gpx": "gpx/Via_Sacra_bis_St_Veit.gpx",
-    "photos": [
-      "photos/WhatsApp Image 2026-02-23 at 15.09.08.jpeg"
-    ],
+    "photos": [],
     "notes": ""
   },
   {
     "id": "2025-09-21-via-sacra-etappe-2-renzenhof-",
     "date": "2025-09-21",
     "title": "Via Sacra Etappe 2 (Renzenhof)",
+    "from": "Heiligenkreuz",
+    "to": "Renzenhof",
     "distance": 19041,
     "duration": 8643,
     "totalTime": 9261,
@@ -35,6 +37,8 @@
     "id": "2025-02-23-via-sacra-etappe-1-heiligenkreuz-",
     "date": "2025-02-23",
     "title": "Via Sacra Etappe 1 (Heiligenkreuz)",
+    "from": "Perchtoldsdorf",
+    "to": "Heiligenkreuz",
     "distance": 15780,
     "duration": 6428,
     "totalTime": 6581,
@@ -42,7 +46,9 @@
     "descent": 474,
     "calories": 1496,
     "gpx": "gpx/Via_Sacra_Etappe_1_(Heiligenkreuz).gpx",
-    "photos": [],
+    "photos": [
+      "photos/WhatsApp Image 2026-02-23 at 15.09.08.jpeg"
+    ],
     "notes": ""
   }
 ]
