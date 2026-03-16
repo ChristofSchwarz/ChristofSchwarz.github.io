@@ -250,6 +250,56 @@ body {
   border-color: #d95a18;
 }
 
+/* ── Landmark cards ── */
+.landmark-section-divider {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #bbb;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 10px 4px 4px;
+}
+
+.landmark-card {
+  background: #fff;
+  border: 1.5px solid #ececea;
+  border-left: 4px solid #7c3aed;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: box-shadow 0.15s, opacity 0.2s;
+}
+
+.landmark-card:hover {
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.landmark-card.inactive {
+  opacity: 0.38;
+  border-left-color: #ccc !important;
+}
+
+.landmark-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 3px;
+}
+
+.landmark-label {
+  font-size: 0.68rem;
+  color: #7c3aed;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.landmark-elevation {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #7c3aed;
+}
+
 /* ── Map ── */
 #map-container {
   flex: 1;

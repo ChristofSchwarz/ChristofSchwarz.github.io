@@ -1,13 +1,17 @@
 // ── Config ────────────────────────────────────────────────────────────────
-const TRAIL_COLORS = ['#d95a18', '#9e3509']; // warm orange, dark burnt orange
-const TRACK_WEIGHT = 3.5;
+const TRAIL_COLORS    = ['#d95a18', '#9e3509']; // warm orange, dark burnt orange
+const LANDMARK_COLOR  = '#7c3aed';              // purple
+const TRACK_WEIGHT    = 3.5;
 
 // ── State ─────────────────────────────────────────────────────────────────
 let map;
-let runsData    = [];
-let trackLayers = {};    // id → L.GPX layer
+let runsData       = [];
+let landmarksData  = [];
+let trackLayers    = {};    // id → L.GPX layer
 let runColors      = {};    // id → color (stable, by original JSON order)
 let activeIds      = new Set();
+let activeLandmarkIds = new Set();
+let landmarkMarkers   = {};  // id → L.Marker
 let finishMarkers  = {};    // id → L.Marker
 let elevationCache = {};
 let chartState     = null;
@@ -49,6 +53,12 @@ async function init() {
     activeIds.add(run.id);
   });
 
+  // Load landmarks
+  try {
+    landmarksData = await fetch('data/landmarks.json').then(r => r.json());
+  } catch (e) { landmarksData = []; }
+  landmarksData.forEach(lm => activeLandmarkIds.add(lm.id));
+
   renderLifetimeStats(runs);
   renderRunList(sortedRuns());
 
@@ -56,6 +66,7 @@ async function init() {
     renderRunList(sortedRuns());
   });
   await loadAllTracks(runsData);
+  loadLandmarks(landmarksData);
 
   // Wire up elevation show/hide controls
   document.getElementById('elevation-close').addEventListener('click',       () => setElevationVisible(false));
@@ -98,12 +109,25 @@ function sortedRuns() {
 // ── Run list sidebar ──────────────────────────────────────────────────────
 function renderRunList(runs) {
   const list = document.getElementById('run-list');
-  list.innerHTML = runs.map(run => runCardHTML(run)).join('');
+
+  const runHTML = runs.map(run => runCardHTML(run)).join('');
+  const lmHTML  = landmarksData.length
+    ? `<div class="landmark-section-divider">Landmarks</div>` +
+      landmarksData.map(lm => landmarkCardHTML(lm)).join('')
+    : '';
+  list.innerHTML = runHTML + lmHTML;
 
   list.querySelectorAll('.run-card').forEach(card => {
     card.addEventListener('click', () => {
       const run = runsData.find(r => r.id === card.dataset.id);
       if (run) toggleRun(run);
+    });
+  });
+
+  list.querySelectorAll('.landmark-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const lm = landmarksData.find(l => l.id === card.dataset.id);
+      if (lm) toggleLandmark(lm);
     });
   });
 }
@@ -173,8 +197,12 @@ async function loadAllTracks(runs) {
   await Promise.all(promises);
 
   if (allBounds.length > 0) {
-    const combined = allBounds.reduce((acc, b) => acc.extend(b));
-    map.fitBounds(combined, { padding: [30, 30] });
+    const combined   = allBounds.reduce((acc, b) => acc.extend(b));
+    const elevOffset = Math.round(window.innerHeight * 0.25) + 20;
+    map.fitBounds(combined, {
+      paddingTopLeft:     [30, 30],
+      paddingBottomRight: [30, elevOffset]
+    });
   }
 
   // Add finish flags (reuses parseGPXElevation which also primes the cache)
@@ -477,6 +505,59 @@ function onChartMouseLeave() {
   if (dot)  dot.setAttribute('opacity', '0');
   if (hoverMarker) hoverMarker.remove();
   hoverMarker = null;
+}
+
+// ── Landmarks ─────────────────────────────────────────────────────────────
+function loadLandmarks(landmarks) {
+  for (const lm of landmarks) {
+    const pinSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="28" viewBox="0 0 20 28">
+        <path d="M10 1 C5.03 1 1 5.03 1 10 C1 17 10 27 10 27 C10 27 19 17 19 10 C19 5.03 14.97 1 10 1 Z"
+          fill="${LANDMARK_COLOR}" stroke="#fff" stroke-width="1.5"/>
+        <circle cx="10" cy="10" r="3.5" fill="#fff"/>
+      </svg>`;
+
+    const marker = L.marker([lm.lat, lm.lon], {
+      icon: L.divIcon({
+        html: pinSvg,
+        className: '',
+        iconSize:   [20, 28],
+        iconAnchor: [10, 27]
+      }),
+      zIndexOffset: 600
+    }).addTo(map);
+
+    landmarkMarkers[lm.id] = marker;
+  }
+}
+
+function toggleLandmark(lm) {
+  const card = document.querySelector(`.landmark-card[data-id="${lm.id}"]`);
+
+  if (activeLandmarkIds.has(lm.id)) {
+    activeLandmarkIds.delete(lm.id);
+    card?.classList.add('inactive');
+    if (landmarkMarkers[lm.id]) landmarkMarkers[lm.id].setOpacity(0);
+  } else {
+    activeLandmarkIds.add(lm.id);
+    card?.classList.remove('inactive');
+    if (landmarkMarkers[lm.id]) landmarkMarkers[lm.id].setOpacity(1);
+  }
+}
+
+function landmarkCardHTML(lm) {
+  const notes = lm.notes
+    ? `<div class="run-notes">${escapeHtml(lm.notes)}</div>`
+    : '';
+  return `
+    <div class="landmark-card" data-id="${lm.id}">
+      <div class="landmark-card-header">
+        <span class="landmark-label">&#x1F4CD; Landmark</span>
+        ${lm.elevation ? `<span class="landmark-elevation">${lm.elevation} m</span>` : ''}
+      </div>
+      <div class="run-title">${escapeHtml(lm.title)}</div>
+      ${notes}
+    </div>`;
 }
 
 // ── Photos in card ────────────────────────────────────────────────────────
