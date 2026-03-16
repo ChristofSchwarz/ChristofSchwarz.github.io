@@ -1,0 +1,227 @@
+/* ── Nav page overrides ── */
+body.nav-page {
+  overflow: auto;
+  background: #f5f5f0;
+}
+
+body.nav-page #top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* ── Tab nav ── */
+#main-nav {
+  display: flex;
+  gap: 2px;
+}
+
+.nav-tab {
+  display: inline-block;
+  padding: 6px 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #888;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav-tab:hover {
+  background: #f5f5f0;
+  color: #555;
+}
+
+.nav-tab.active {
+  background: #fff3ee;
+  color: #d95a18;
+}
+
+.nav-tab.nav-link-out {
+  color: #aaa;
+}
+
+.nav-tab.nav-link-out:hover {
+  color: #d95a18;
+  background: #fff3ee;
+}
+
+/* ── Content area ── */
+#nav-content {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 24px 60px;
+}
+
+/* ── Tab sections ── */
+.tab-section {
+  display: none;
+}
+
+.tab-section.active {
+  display: block;
+}
+
+/* ── Prose (story) ── */
+.prose {
+  line-height: 1.7;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.prose h1 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 6px;
+  letter-spacing: -0.3px;
+}
+
+.prose h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #d95a18;
+  margin: 28px 0 8px;
+}
+
+.prose h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #444;
+  margin: 20px 0 6px;
+}
+
+.prose p {
+  margin: 0 0 14px;
+}
+
+.prose strong {
+  color: #1a1a1a;
+  font-weight: 700;
+}
+
+.prose a {
+  color: #d95a18;
+  text-decoration: none;
+}
+
+.prose a:hover {
+  text-decoration: underline;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid #e4e4e0;
+  margin: 28px 0;
+}
+
+.prose table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 14px 0 20px;
+  font-size: 0.88rem;
+}
+
+.prose th {
+  text-align: left;
+  font-weight: 700;
+  color: #555;
+  border-bottom: 2px solid #e4e4e0;
+  padding: 6px 12px;
+}
+
+.prose td {
+  padding: 6px 12px;
+  border-bottom: 1px solid #f0efed;
+  color: #444;
+}
+
+.prose ul, .prose ol {
+  padding-left: 20px;
+  margin: 0 0 14px;
+}
+
+.prose li {
+  margin-bottom: 4px;
+}
+
+.prose blockquote {
+  border-left: 3px solid #d95a18;
+  margin: 0 0 14px;
+  padding: 4px 0 4px 16px;
+  color: #777;
+  font-style: italic;
+}
+
+.prose code {
+  background: #f0efed;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 0.88em;
+}
+
+/* ── Album grid ── */
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.album-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #eee;
+}
+
+.album-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.15s;
+}
+
+.album-item:hover img {
+  opacity: 0.88;
+}
+
+.album-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 8px 5px;
+  font-size: 0.68rem;
+  color: #fff;
+  background: linear-gradient(transparent, rgba(0,0,0,0.5));
+  pointer-events: none;
+}
+
+.album-empty {
+  color: #bbb;
+  font-size: 0.88rem;
+  text-align: center;
+  padding: 60px 0;
+}
+
+.album-empty.hidden { display: none; }
+
+/* ── Responsive ── */
+@media (max-width: 767px) {
+  #nav-content {
+    padding: 20px 16px 48px;
+  }
+
+  .nav-tab {
+    padding: 5px 11px;
+    font-size: 0.78rem;
+  }
+
+  .album-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 7px;
+  }
+}
