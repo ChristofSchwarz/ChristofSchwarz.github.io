@@ -201,6 +201,31 @@ body.nav-page #top-bar {
 
 .album-empty.hidden { display: none; }
 
+/* ── Modal nav buttons ── */
+.modal-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: #fff;
+  font-size: 2.8rem;
+  line-height: 1;
+  padding: 12px 18px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
+  z-index: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.modal-nav:hover {
+  background: rgba(255,255,255,0.28);
+}
+
+#modal-prev { left: 12px; }
+#modal-next { right: 12px; }
+
 /* ── Responsive ── */
 @media (max-width: 767px) {
   #nav-content {

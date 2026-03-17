@@ -60,39 +60,48 @@ function buildRouteTable(runs) {
 }
 
 // ── Album: show all photos from runs ─────────────────────────────────────
+let allPhotos = [];
+
 function renderAlbum(runs) {
   const grid  = document.getElementById('album-grid');
   const empty = document.getElementById('album-empty');
 
-  const photos = [];
+  allPhotos = [];
   for (const run of runs) {
     if (run.photos && run.photos.length) {
       for (const src of run.photos) {
-        photos.push({ src, runTitle: run.title });
+        allPhotos.push({ src, runTitle: run.title });
       }
     }
   }
 
-  if (!photos.length) {
+  if (!allPhotos.length) {
     empty.classList.remove('hidden');
     return;
   }
 
-  grid.innerHTML = photos.map(p => `
-    <div class="album-item" data-src="${p.src}">
+  grid.innerHTML = allPhotos.map((p, i) => `
+    <div class="album-item" data-index="${i}">
       <img src="${p.src}" alt="${escapeHtml(p.runTitle)}" loading="lazy" />
       <div class="album-caption">${escapeHtml(p.runTitle)}</div>
     </div>`
   ).join('');
 
   grid.querySelectorAll('.album-item').forEach(item => {
-    item.addEventListener('click', () => openPhotoModal(item.dataset.src));
+    item.addEventListener('click', () => openPhotoModal(+item.dataset.index));
   });
 }
 
 // ── Photo modal ───────────────────────────────────────────────────────────
-function openPhotoModal(src) {
-  document.getElementById('photo-modal-img').src = src;
+let currentPhotoIndex = 0;
+
+function openPhotoModal(index) {
+  currentPhotoIndex = index;
+  const photo = allPhotos[index];
+  document.getElementById('photo-modal-img').src = photo.src;
+  document.getElementById('photo-modal-img').alt = photo.runTitle;
+  document.getElementById('modal-prev').style.visibility = index > 0 ? 'visible' : 'hidden';
+  document.getElementById('modal-next').style.visibility = index < allPhotos.length - 1 ? 'visible' : 'hidden';
   document.getElementById('photo-modal').classList.remove('hidden');
 }
 
@@ -102,7 +111,33 @@ function closePhotoModal() {
 }
 
 document.getElementById('photo-modal-backdrop').addEventListener('click', closePhotoModal);
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closePhotoModal(); });
+document.getElementById('modal-prev').addEventListener('click', e => {
+  e.stopPropagation();
+  if (currentPhotoIndex > 0) openPhotoModal(currentPhotoIndex - 1);
+});
+document.getElementById('modal-next').addEventListener('click', e => {
+  e.stopPropagation();
+  if (currentPhotoIndex < allPhotos.length - 1) openPhotoModal(currentPhotoIndex + 1);
+});
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (document.getElementById('photo-modal').classList.contains('hidden')) return;
+  if (e.key === 'Escape')     closePhotoModal();
+  if (e.key === 'ArrowRight') openPhotoModal(Math.min(currentPhotoIndex + 1, allPhotos.length - 1));
+  if (e.key === 'ArrowLeft')  openPhotoModal(Math.max(currentPhotoIndex - 1, 0));
+});
+
+// Swipe gesture
+let touchStartX = 0;
+const modal = document.getElementById('photo-modal');
+modal.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+modal.addEventListener('touchend', e => {
+  const delta = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(delta) < 40) return;
+  if (delta < 0) openPhotoModal(Math.min(currentPhotoIndex + 1, allPhotos.length - 1));
+  else           openPhotoModal(Math.max(currentPhotoIndex - 1, 0));
+});
 
 // ── Helper ────────────────────────────────────────────────────────────────
 function escapeHtml(str) {
