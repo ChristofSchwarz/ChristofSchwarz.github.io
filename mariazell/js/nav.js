@@ -1,15 +1,24 @@
 // ── Tab switching ──────────────────────────────────────────────────────────
+function activateTab(target) {
+  document.querySelectorAll('.nav-tab[data-tab]').forEach(t =>
+    t.classList.toggle('active', t.dataset.tab === target));
+  document.querySelectorAll('.tab-section').forEach(s =>
+    s.classList.toggle('active', s.id === 'tab-' + target));
+  history.replaceState(null, '', '#' + target);
+}
+
 document.querySelectorAll('.nav-tab[data-tab]').forEach(tab => {
   tab.addEventListener('click', e => {
     e.preventDefault();
-    const target = tab.dataset.tab;
-
-    document.querySelectorAll('.nav-tab[data-tab]').forEach(t =>
-      t.classList.toggle('active', t.dataset.tab === target));
-    document.querySelectorAll('.tab-section').forEach(s =>
-      s.classList.toggle('active', s.id === 'tab-' + target));
+    activateTab(tab.dataset.tab);
   });
 });
+
+// Activate tab from URL hash on load (e.g. index.html#album)
+const initialTab = window.location.hash.replace('#', '');
+if (initialTab && document.getElementById('tab-' + initialTab)) {
+  activateTab(initialTab);
+}
 
 // ── Load runs.json once, then render story + album ────────────────────────
 fetch('data/runs.json')

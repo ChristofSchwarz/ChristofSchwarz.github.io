@@ -37,14 +37,6 @@ body.nav-page #top-bar {
   color: #d95a18;
 }
 
-.nav-tab.nav-link-out {
-  color: #aaa;
-}
-
-.nav-tab.nav-link-out:hover {
-  color: #d95a18;
-  background: #fff3ee;
-}
 
 /* ── Content area ── */
 #nav-content {
