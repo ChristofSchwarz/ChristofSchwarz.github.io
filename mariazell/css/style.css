@@ -35,9 +35,15 @@ body {
   letter-spacing: -0.2px;
 }
 
-#lifetime-stats {
+#stats-bar {
   display: flex;
-  gap: 24px;
+  align-items: center;
+  gap: 20px;
+  padding: 0 20px;
+  height: 28px;
+  min-height: 28px;
+  background: #fff;
+  border-bottom: 1px solid #e4e4e0;
 }
 
 .stat {
@@ -409,7 +415,7 @@ body {
   /* Compact top bar */
   #top-bar { padding: 0 14px; }
   #brand { font-size: 1rem; }
-  #lifetime-stats { gap: 14px; }
+  #stats-bar { gap: 14px; padding: 0 14px; }
   .stat { font-size: 0.76rem; }
   .stat strong { font-size: 0.88rem; }
 
