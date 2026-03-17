@@ -73,8 +73,9 @@ async function init() {
   document.getElementById('elev-toggle-btn').addEventListener('click',       () => setElevationVisible(document.getElementById('elevation-panel').classList.contains('hidden')));
   document.getElementById('elev-mobile-reopen').addEventListener('click',   () => setElevationVisible(true));
 
-  document.getElementById('photo-modal-backdrop').addEventListener('click', closePhotoModal);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePhotoModal(); });
+  document.getElementById('photos-bubble-backdrop').addEventListener('click', closePhotosBubble);
+  document.getElementById('photos-bubble-close').addEventListener('click', closePhotosBubble);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePhotosBubble(); });
 
   // Re-render chart at correct size when window is resized
   window.addEventListener('resize', () => {
@@ -124,6 +125,14 @@ function renderRunList(runs) {
     });
   });
 
+  list.querySelectorAll('.run-photos-count').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const run = runsData.find(r => r.id === btn.dataset.id);
+      if (run) openPhotosBubble(run);
+    });
+  });
+
   list.querySelectorAll('.landmark-card').forEach(card => {
     card.addEventListener('click', () => {
       const lm = landmarksData.find(l => l.id === card.dataset.id);
@@ -139,7 +148,7 @@ function runCardHTML(run) {
   const pace    = formatPace(run.distance, run.duration);
   const dur     = formatDuration(run.duration);
   const photosNote = run.photos && run.photos.length
-    ? `<div class="run-photos-count">&#x1F4F7; ${run.photos.length} photo${run.photos.length > 1 ? 's' : ''}</div>`
+    ? `<button class="run-photos-count" data-id="${run.id}">&#x1F4F7; ${run.photos.length} Foto${run.photos.length > 1 ? 's' : ''}</button>`
     : '';
   const notes = run.notes
     ? `<div class="run-notes">${escapeHtml(run.notes)}</div>`
@@ -227,7 +236,6 @@ function toggleRun(run) {
     card?.classList.remove('inactive');
     setTrackOpacity(trackLayers[run.id], 0.85);
     if (finishMarkers[run.id]) finishMarkers[run.id].setOpacity(1);
-    if (run.photos && run.photos.length > 0) renderPhotosInCard(run);
   }
   updateElevationChart();
 }
@@ -568,38 +576,22 @@ function landmarkCardHTML(lm) {
     </div>`;
 }
 
-// ── Photos in card ────────────────────────────────────────────────────────
-function renderPhotosInCard(run) {
-  const card = document.querySelector(`.run-card[data-id="${run.id}"]`);
-  if (!card) return;
+// ── Photos bubble modal ───────────────────────────────────────────────────
+function openPhotosBubble(run) {
+  document.getElementById('photos-bubble-title').textContent =
+    `${run.photos.length} Foto${run.photos.length > 1 ? 's' : ''} — ${run.title}`;
 
-  let gallery = card.querySelector('.run-photos-gallery');
-  if (gallery) return; // already rendered
-
-  gallery = document.createElement('div');
-  gallery.className = 'run-photos-gallery';
-  gallery.innerHTML = run.photos.map(src =>
-    `<img src="${src}" alt="Run photo" />`
+  document.getElementById('photos-bubble-grid').innerHTML = run.photos.map(src =>
+    `<a href="index.html#album" class="bubble-thumb">
+       <img src="${src}" alt="" />
+     </a>`
   ).join('');
 
-  gallery.querySelectorAll('img').forEach(img => {
-    img.addEventListener('click', e => {
-      e.stopPropagation();
-      openPhotoModal(img.src);
-    });
-  });
-
-  card.appendChild(gallery);
+  document.getElementById('photos-bubble').classList.remove('hidden');
 }
 
-function openPhotoModal(src) {
-  document.getElementById('photo-modal-img').src = src;
-  document.getElementById('photo-modal').classList.remove('hidden');
-}
-
-function closePhotoModal() {
-  document.getElementById('photo-modal').classList.add('hidden');
-  document.getElementById('photo-modal-img').src = '';
+function closePhotosBubble() {
+  document.getElementById('photos-bubble').classList.add('hidden');
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -615,9 +607,8 @@ function haversine(lat1, lon1, lat2, lon2) {
 function formatDuration(seconds) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.round(seconds % 60);
-  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  return `${m}:${String(s).padStart(2, '0')}`;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}`;
+  return `${m} min`;
 }
 
 function formatPace(distanceM, durationS) {

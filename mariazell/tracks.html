@@ -58,9 +58,18 @@
 
   <button id="elev-mobile-reopen">&#9651; Elevation</button>
 
-  <div id="photo-modal" class="hidden">
-    <div id="photo-modal-backdrop"></div>
-    <img id="photo-modal-img" src="" alt="" />
+  <div id="photos-bubble" class="hidden">
+    <div id="photos-bubble-backdrop"></div>
+    <div id="photos-bubble-panel">
+      <div id="photos-bubble-header">
+        <span id="photos-bubble-title"></span>
+        <button id="photos-bubble-close">&#x2715;</button>
+      </div>
+      <div id="photos-bubble-grid"></div>
+      <div id="photos-bubble-footer">
+        <a href="index.html#album">Alle Fotos im Album &#8599;</a>
+      </div>
+    </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
