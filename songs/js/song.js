@@ -39,6 +39,13 @@ function setupSongEventListeners() {
         else if (e.key === 'ArrowLeft') previousChunk();
         else if (e.key >= '1' && e.key <= '9') selectChunk(parseInt(e.key) - 1);
     });
+
+    // Re-fit the current chunk's text on orientation change / viewport resize
+    window.addEventListener('resize', () => {
+        if (document.getElementById('songView').style.display !== 'none') {
+            fitLyricsText();
+        }
+    });
 }
 
 // Called by app.js's openSong() with the song object directly - no
@@ -187,9 +194,30 @@ function selectChunk(index) {
 
     const lyricsContainer = document.getElementById('lyricsContent');
     lyricsContainer.innerHTML = chunks[index].html;
+    fitLyricsText();
 
     const chunkViewer = document.querySelector('.chunk-viewer');
     if (chunkViewer) chunkViewer.scrollTop = 0;
+}
+
+// Gestures only jump between whole chunks - there's no hands-free way to
+// scroll within one - so each chunk needs to fit its space without
+// scrolling. Shrink the font size down from its CSS-defined size until the
+// content fits, rather than a fixed size that overflows on longer verses.
+function fitLyricsText() {
+    const container = document.querySelector('.chunk-viewer');
+    const content = document.getElementById('lyricsContent');
+    if (!container || !content) return;
+
+    content.style.fontSize = ''; // reset to the CSS-defined base size first
+    const baseFontSize = parseFloat(getComputedStyle(content).fontSize);
+    const minFontSize = baseFontSize * 0.6; // stays readable from a music stand
+
+    let fontSize = baseFontSize;
+    while (content.scrollHeight > container.clientHeight && fontSize > minFontSize) {
+        fontSize -= 1;
+        content.style.fontSize = `${fontSize}px`;
+    }
 }
 
 function nextChunk() {
