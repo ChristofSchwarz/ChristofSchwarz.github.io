@@ -8,7 +8,7 @@ let autoStartTimer = null;
 // Hand-gesture navigation. Continuous head-turn scrolling was tried first
 // but proved impractical on stage: ordinary head movement while playing
 // keyboard kept triggering accidental scrolling. Two deliberate, unlikely-
-// to-happen-by-accident hand gestures (3 fingers / "call me") replace it.
+// to-happen-by-accident hand gestures ("call me" / 3 fingers) replace it.
 let hands = null;
 let gestureEnabled = false;
 let handsFrameLoopId = null;
@@ -103,7 +103,7 @@ function displaySongInfo() {
 
     const tags = [];
     if (currentSong.interpret) tags.push(`<span class="tag">🎤 ${escapeHtml(currentSong.interpret)}</span>`);
-    if (currentSong.year) tags.push(`<span class="tag">📅 ${escapeHtml(currentSong.year)}</span>`);
+    if (currentSong.year) tags.push(`<span class="tag">${escapeHtml(currentSong.year)}</span>`);
     if (currentSong.key) tags.push(`<span class="tag">🎼 ${escapeHtml(currentSong.key)}</span>`);
     if (currentSong.bpm) tags.push(`<span class="tag">🥁 ${escapeHtml(currentSong.bpm)} bpm</span>`);
     document.getElementById('songMeta').innerHTML = tags.join('');
@@ -400,14 +400,14 @@ function onHandResults(results) {
     processGesture(gesture);
 }
 
-// 3 fingers = next section, "call me" sign = previous section. Both were
+// "call me" sign = next section, 3 fingers = previous section. Both were
 // chosen specifically because they don't happen by accident while playing.
 function processGesture(gesture) {
     const now = Date.now();
     if (now - lastActionTime < ACTION_COOLDOWN) return;
 
-    const isNext = gesture === '3 fingers';
-    const isPrevious = gesture === '🤙 Call Me';
+    const isNext = gesture === '🤙 Call Me';
+    const isPrevious = gesture === '3 fingers';
     if (!isNext && !isPrevious) {
         if (currentGesture !== lastProcessedGesture) lastProcessedGesture = null;
         return;

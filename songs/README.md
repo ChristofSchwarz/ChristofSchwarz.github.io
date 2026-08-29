@@ -47,8 +47,8 @@ Use the search bar and filters to find songs. Click any song card to view lyrics
 
 Lyrics are split into sections at each `<h2>` heading and shown one at a time, with tabs across the top to jump between them. Play Mode starts automatically a moment after you open a song (allow camera access when prompted the first time), and navigates hands-free:
 
-- **Show 3 fingers** to go to the next section
-- **Make a "call me" 🤙 sign** to go to the previous section
+- **Make a "call me" 🤙 sign** to go to the next section
+- **Show 3 fingers** to go to the previous section
 
 These two gestures were chosen because they don't happen by accident while playing an instrument - an earlier version scrolled continuously based on head turns, but ordinary head movement while playing keyboard triggered it accidentally, so it was replaced with this. Tap the ✋ button in the header to pause/resume gesture control, or use the tabs / arrow keys to jump to a section directly.
 

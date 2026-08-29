@@ -582,7 +582,7 @@ async function displaySongs(songs) {
             <h3>${escapeHtml(song.songName) || 'Untitled'}</h3>
             <p class="artist">${escapeHtml(song.interpret) || 'Unknown Artist'}</p>
             <div class="metadata">
-                ${song.year ? `<span class="tag">📅 ${escapeHtml(song.year)}</span>` : ''}
+                ${song.year ? `<span class="tag">${escapeHtml(song.year)}</span>` : ''}
                 ${song.key ? `<span class="tag">🎼 ${escapeHtml(song.key)}</span>` : ''}
                 ${song.bpm ? `<span class="tag">🥁 ${escapeHtml(song.bpm)} bpm</span>` : ''}
             </div>

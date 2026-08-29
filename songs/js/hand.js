@@ -141,8 +141,8 @@ function processGesture(gesture) {
     }
     
     // Check if this is a navigation gesture
-    const isNext = gesture === '3 fingers';
-    const isPrevious = gesture === '🤙 Call Me';
+    const isNext = gesture === '🤙 Call Me';
+    const isPrevious = gesture === '3 fingers';
     
     if (isNext || isPrevious) {
         // If this gesture is different from what we last processed, execute action
@@ -231,8 +231,8 @@ function generateSelectionBoxes() {
 // Built-in practice content, so this page works standalone for calibrating
 // gestures before a show without depending on any real song data.
 const PRACTICE_CHUNKS = [
-    '<h2>Verse</h2><p>Practice section 1. Show <strong>3 fingers</strong> to jump to the next section.</p>',
-    '<h2>Chorus</h2><p>Practice section 2. Make the <strong>🤙 call-me</strong> sign to go back.</p>',
+    '<h2>Verse</h2><p>Practice section 1. Make the <strong>🤙 call-me</strong> sign to jump to the next section.</p>',
+    '<h2>Chorus</h2><p>Practice section 2. Show <strong>3 fingers</strong> to go back.</p>',
     '<h2>Bridge</h2><p>Practice section 3. You can also tap a box above to jump directly.</p>'
 ];
 
