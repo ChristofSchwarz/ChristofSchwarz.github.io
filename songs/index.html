@@ -6,9 +6,10 @@
     <title>My Music</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <div class="container">
+    <div id="libraryView" class="container">
         <header>
             <h1>🎵 My Music</h1>
             <button id="menuBtn" class="menu-btn">☰</button>
@@ -16,6 +17,9 @@
 
         <div id="menuPanel" class="menu-panel" style="display:none">
             <div class="menu-items">
+                <button id="cameraToggleBtn" class="upload-label">
+                    🎥 Enable Camera
+                </button>
                 <button id="refreshBtn" class="upload-label">
                     🔄 Refresh from Google Sheets
                 </button>
@@ -43,7 +47,7 @@
                 <input type="text" id="searchInput" placeholder="Search songs or artists...">
                 <div id="songCounter" class="song-counter">0 songs</div>
             </div>
-            
+
             <div class="filter-section">
                 <select id="sortBy">
                     <option value="song">⇅ Sort by Song</option>
@@ -51,11 +55,11 @@
                     <option value="yearAsc">↓ Sort by Year Asc</option>
                     <option value="yearDesc">↑ Sort by Year Desc</option>
                 </select>
-                
+
                 <select id="filterInterpret">
                     <option value="">👥 All Artists</option>
                 </select>
-                
+
                 <div class="range-slider-container">
                     <label>📅 Year: <span id="yearRangeLabel">-</span></label>
                     <div class="range-slider-wrapper">
@@ -63,17 +67,17 @@
                         <input type="range" id="yearMax" min="1900" max="2100" value="2100" class="range-slider">
                     </div>
                 </div>
-                
+
                 <select id="filterKey">
                     <option value="">🎼 All Keys</option>
                 </select>
-                
+
                 <select id="filterInstrumental">
                     <option value="">🎤/🎹 All</option>
                     <option value="1">🎹Instrumental</option>
                     <option value="0">🎤With Vocals</option>
                 </select>
-                
+
                 <div class="range-slider-container">
                     <label>🥁 BPM: <span id="bpmRangeLabel">-</span></label>
                     <div class="range-slider-wrapper">
@@ -81,7 +85,7 @@
                         <input type="range" id="bpmMax" min="40" max="240" value="240" class="range-slider">
                     </div>
                 </div>
-                
+
                 <button id="clearFilters">Clear Filters</button>
             </div>
         </div>
@@ -91,6 +95,40 @@
         </div>
     </div>
 
+    <div id="songView" class="container" style="display:none">
+        <header class="song-header-bar">
+            <button id="backBtn" class="header-icon-btn" aria-label="Back">←</button>
+            <div class="song-header-info">
+                <h1 id="songTitle"></h1>
+                <div id="songMeta" class="song-meta-tags"></div>
+            </div>
+            <button id="playModeBtn" class="header-icon-btn" aria-label="Toggle gesture control">✋</button>
+        </header>
+
+        <nav class="song-actions-bar">
+            <button id="countInBtn"><span class="btn-icon">🥁</span><span class="btn-text"> Count In</span></button>
+            <a id="originalLink" target="_blank" style="display:none"><span class="btn-icon">🎵</span><span class="btn-text"> Original</span></a>
+            <a id="karaokeLink" target="_blank" style="display:none"><span class="btn-icon">🎤</span><span class="btn-text"> Karaoke</span></a>
+            <a id="editLink" target="_blank"><span class="btn-icon">✏️</span><span class="btn-text"> Edit</span></a>
+        </nav>
+
+        <div class="camera-wrapper" style="display:none">
+            <video id="cameraFeed" autoplay playsinline></video>
+            <div id="gestureIndicator" class="gesture-indicator-overlay">
+                <span id="gestureStatus">Active</span>
+            </div>
+        </div>
+
+        <div class="chunk-tabs" id="chunkTabs"></div>
+
+        <div class="chunk-viewer">
+            <div id="lyricsContent"></div>
+        </div>
+    </div>
+
+    <script src="js/playtones.js"></script>
+    <script src="js/gestures.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/song.js"></script>
 </body>
 </html>
