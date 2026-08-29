@@ -8,20 +8,16 @@
     <link rel="stylesheet" href="css/hand.css">
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-    <script src="js/playtones.js"></script>
     <script src="js/gestures.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
             <h1 id="pageTitle">👋 Hand Gesture Recognition</h1>
-            <div id="songMetadata" class="song-metadata" style="display:none;"></div>
         </header>
 
         <div class="button-ribbon">
             <button id="backButton" class="ribbon-button">← Back</button>
-            <button id="countInButton" class="ribbon-button">🥁 Count In</button>
-            <button id="editButton" class="ribbon-button" style="display:none;">✏️ Edit</button>
             <button id="cameraToggle" class="ribbon-button">⏸️ Pause Camera</button>
         </div>
 
@@ -37,15 +33,7 @@
             </div>
 
             <div class="info-box">
-                <p><strong>Instructions:</strong> Show your hand to the camera. Use 3 fingers for next, 4 fingers for previous.</p>
-                <div style="margin-top: 10px;">
-                    <label for="songSelect" style="font-weight: bold; margin-right: 10px;">Song:</label>
-                    <select id="songSelect" style="padding: 5px 10px; border-radius: 5px; border: 2px solid #667eea; font-size: 14px;">
-                        <option value="wonderwall">Wonderwall - Oasis</option>
-                        <option value="bohemian-rhapsody">Bohemian Rhapsody - Queen</option>
-                        <option value="hotel-california">Hotel California - Eagles</option>
-                    </select>
-                </div>
+                <p><strong>Instructions:</strong> Show your hand to the camera. Show <strong>3 fingers</strong> to go to the next practice section, or make the <strong>🤙 call-me</strong> sign to go to the previous one - these are the same two gestures used in the real song viewer.</p>
             </div>
         </div>
 

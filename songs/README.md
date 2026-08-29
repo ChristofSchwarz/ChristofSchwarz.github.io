@@ -13,9 +13,9 @@ A web-based music lyrics library with hands-free section navigation during perfo
 
 ## How to Use
 
-### 1. Prepare Your Data
+### 1. Maintain Your Song Data
 
-Create an Excel or CSV file with the following columns:
+Song metadata (name, artist, year, key, bpm, links) lives in a Google Sheet, linked via `googleSheetsUrl` in `config.json`. The app fetches it automatically on load - just edit the sheet (the menu's "✏️ Edit linked Google Sheet" link opens it directly) and use "🔄 Refresh from Google Sheets" to pull changes in. Expected columns:
 - Song Name
 - Interpret (Artist)
 - Year of release
@@ -23,33 +23,27 @@ Create an Excel or CSV file with the following columns:
 - bpm
 - link to original song
 - link to Karaoke version
-- lyrics file (HTML filename in the `lyrics` folder)
+- lyrics file (a Google Docs URL, or an HTML filename in the `lyrics` folder)
 
-**Example**: See `songs-database.csv`
+If you'd rather not use Google Sheets, "📁 Load Local File (Excel/CSV)" in the menu loads the same shape from a local `.xlsx`/`.csv` instead.
 
-### 2. Create Lyrics Files
+### 2. Write Lyrics
 
-Create HTML files in the `lyrics` folder with your song lyrics. Use HTML formatting:
-- `<h2>` for section headers (Verse, Chorus, etc.)
+Each song's lyrics can either be a Google Doc (put its share URL in the "lyrics file" column - it must be shared as "Anyone with the link can view"), or an HTML file placed in the `lyrics` folder. Either way, use `<h2>` to mark section headings (Verse, Chorus, ...) - the app splits lyrics into sections at each `<h2>` and shows them one at a time with tabs to jump between them:
+- `<h2>` for section headers
 - `<p>` for lyrics paragraphs
 - `<br>` for line breaks
 - `<strong>` or `<em>` for emphasis
-
-**Example**: See `lyrics/wonderwall.html`
 
 ### 3. Run the Application
 
 Open `index.html` in a modern web browser (Chrome, Edge, or Firefox recommended).
 
-### 4. Load Your Songs
-
-Click "Load Song Database" and select your Excel/CSV file.
-
-### 5. Browse and Filter
+### 4. Browse and Filter
 
 Use the search bar and filters to find songs. Click any song card to view lyrics.
 
-### 6. Play Mode (Gesture Control)
+### 5. Play Mode (Gesture Control)
 
 Lyrics are split into sections at each `<h2>` heading and shown one at a time, with tabs across the top to jump between them. Play Mode starts automatically a moment after you open a song (allow camera access when prompted the first time), and navigates hands-free:
 
@@ -76,20 +70,17 @@ These two gestures were chosen because they don't happen by accident while playi
 ```
 songs/
 ├── index.html           # Library + song viewer (single page, no navigation between them)
-├── hand.html            # Standalone gesture practice/calibration tool
-├── songs-database.csv   # Example song database
+├── hand.html             # Standalone gesture practice/calibration tool
+├── config.json           # Linked Google Sheet / Drive folder URLs
 ├── css/
 │   └── styles.css       # All styles
 ├── js/
-│   ├── app.js           # Library logic, shared camera stream, view switching
+│   ├── app.js            # Library logic, shared camera stream, view switching
 │   ├── song.js           # Song view: lyrics chunking, tabs, gesture navigation
 │   ├── gestures.js       # Shared MediaPipe Hands gesture detection (used by song.js and hand.js)
 │   ├── hand.js           # hand.html's finger-count practice tool
-│   └── playtones.js     # Count-in metronome
-└── lyrics/
-    ├── wonderwall.html
-    ├── hotel-california.html
-    └── bohemian-rhapsody.html
+│   └── playtones.js      # Count-in metronome
+└── lyrics/               # Optional local lyrics files (see "Write Lyrics" above)
 ```
 
 ## Technologies Used
@@ -111,8 +102,9 @@ All processing happens locally in your browser. The camera feed is used only for
 - Use GitHub Pages or a local HTTPS server
 
 **Songs not loading?**
-- Check that column names in your Excel file match the required format
-- Ensure lyrics files exist in the `lyrics` folder
+- Check that `config.json`'s `googleSheetsUrl` points to a sheet published/exported as CSV
+- Check that column names in the sheet (or your Excel file) match the required format
+- For Google Doc lyrics, make sure the doc is shared as "Anyone with the link can view"; for local lyrics, ensure the file exists in the `lyrics` folder
 - Check browser console for error messages
 
 **Gesture control not navigating?**

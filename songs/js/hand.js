@@ -12,8 +12,7 @@ let currentGesture = null; // Current detected gesture
 let lastProcessedGesture = null; // Last gesture that triggered an action
 let lastActionTime = 0; // Timestamp of last navigation action
 const ACTION_COOLDOWN = 700; // Cooldown period in milliseconds (0.7 seconds)
-let chunks = []; // Store parsed chunks from current song
-let currentSong = 'wonderwall'; // Current song file name
+let chunks = []; // Store parsed chunks for the current practice content
 let cameraActive = false; // Track camera state
 
 // Initialize MediaPipe Hands
@@ -200,43 +199,6 @@ function displayChunk(chunkIndex) {
     }
 }
 
-// Display song metadata
-function displaySongMetadata(song) {
-    const pageTitle = document.getElementById('pageTitle');
-    const metadata = document.getElementById('songMetadata');
-    const editButton = document.getElementById('editButton');
-    
-    // Update page title with song name and artist
-    if (song.songName) {
-        pageTitle.textContent = song.songName;
-    }
-    
-    // Show Edit button if song has a URL lyrics file
-    if (song.lyricsFile && (song.lyricsFile.startsWith('http://') || song.lyricsFile.startsWith('https://'))) {
-        editButton.style.display = 'inline-block';
-    }
-    
-    // Build metadata tags
-    const tags = [];
-    if (song.interpret) {
-        tags.push(`<span class="tag">🎤 ${song.interpret}</span>`);
-    }
-    if (song.year) {
-        tags.push(`<span class="tag">📅 ${song.year}</span>`);
-    }
-    if (song.key) {
-        tags.push(`<span class="tag">🎼 ${song.key}</span>`);
-    }
-    if (song.bpm) {
-        tags.push(`<span class="tag">🥁 ${song.bpm} bpm</span>`);
-    }
-    
-    if (tags.length > 0) {
-        metadata.innerHTML = tags.join('');
-        metadata.style.display = 'block';
-    }
-}
-
 // Generate selection boxes from chunks
 function generateSelectionBoxes() {
     const parser = new DOMParser();
@@ -266,139 +228,20 @@ function generateSelectionBoxes() {
     }
 }
 
-// Load lyrics from Google Sheet URL
-async function loadFromGoogleSheet(url) {
-    try {
-        console.log('Loading from URL:', url);
-        document.getElementById('chunkContent').innerHTML = '<p>Loading from Google Sheet...</p>';
-        
-        // Convert Google Docs edit URL to export format if needed
-        let fetchUrl = url;
-        if (url.includes('docs.google.com/document')) {
-            // Convert edit URL to export URL
-            fetchUrl = url.replace(/\/edit.*$/, '/export?format=html');
-            console.log('Converted to export URL:', fetchUrl);
-        }
-        
-        // Fetch the Google Sheet/Doc
-        const response = await fetch(fetchUrl);
-        console.log('Response status:', response.status);
-        if (!response.ok) {
-            throw new Error('Failed to fetch lyrics');
-        }
-        
-        const html = await response.text();
-        console.log('Fetched HTML length:', html.length);
-        
-        // Parse HTML
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        
-        // Extract h1 for page title if present
-        const h1Tag = doc.querySelector('h1');
-        if (h1Tag) {
-            const pageTitle = h1Tag.textContent.trim();
-            document.querySelector('header h1').textContent = pageTitle;
-        }
-        
-        // Find all h2 tags
-        const h2Tags = doc.querySelectorAll('h2');
-        
-        // Split content into chunks based on h2 tags
-        chunks = [];
-        
-        if (h2Tags.length === 0) {
-            // No h2 tags found - create single chunk with all content
-            const bodyContent = doc.body.innerHTML;
-            chunks.push(bodyContent);
-            console.log('No h2 tags found, created single chunk');
-        } else {
-            // Split by h2 tags
-            for (let i = 0; i < h2Tags.length; i++) {
-                const h2 = h2Tags[i];
-                let chunkHTML = h2.outerHTML;
-                
-                // Collect all elements until next h2 or end
-                let currentElement = h2.nextElementSibling;
-                while (currentElement && currentElement.tagName !== 'H2') {
-                    chunkHTML += currentElement.outerHTML;
-                    currentElement = currentElement.nextElementSibling;
-                }
-                
-                chunks.push(chunkHTML);
-            }
-        }
-        
-        // Generate selection boxes
-        generateSelectionBoxes();
-        
-        // Reset selection and display first chunk
-        lastSelection = 0;
-        currentChunk = 1;
-        if (chunks.length > 0) {
-            selectBox(1);
-        }
-        
-    } catch (error) {
-        console.error('Error loading from Google Sheet:', error);
-        document.getElementById('chunkContent').innerHTML = '<p>Error loading lyrics. Please try again.</p>';
-    }
-}
+// Built-in practice content, so this page works standalone for calibrating
+// gestures before a show without depending on any real song data.
+const PRACTICE_CHUNKS = [
+    '<h2>Verse</h2><p>Practice section 1. Show <strong>3 fingers</strong> to jump to the next section.</p>',
+    '<h2>Chorus</h2><p>Practice section 2. Make the <strong>🤙 call-me</strong> sign to go back.</p>',
+    '<h2>Bridge</h2><p>Practice section 3. You can also tap a box above to jump directly.</p>'
+];
 
-// Load and parse song lyrics
-async function loadSong(songName) {
-    try {
-        currentSong = songName;
-        const response = await fetch(`lyrics/${songName}.html`);
-        const html = await response.text();
-        
-        // Parse HTML
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        
-        // Extract h1 for page title if present
-        const h1Tag = doc.querySelector('h1');
-        if (h1Tag) {
-            const pageTitle = h1Tag.textContent.trim();
-            document.querySelector('header h1').textContent = pageTitle;
-        } else {
-            // Reset to default title
-            document.querySelector('header h1').textContent = '👋 Hand Gesture Recognition';
-        }
-        
-        // Find all h2 tags
-        const h2Tags = doc.querySelectorAll('h2');
-        
-        // Split content into chunks based on h2 tags
-        chunks = [];
-        for (let i = 0; i < h2Tags.length; i++) {
-            const h2 = h2Tags[i];
-            let chunkHTML = h2.outerHTML;
-            
-            // Collect all elements until next h2 or end
-            let currentElement = h2.nextElementSibling;
-            while (currentElement && currentElement.tagName !== 'H2') {
-                chunkHTML += currentElement.outerHTML;
-                currentElement = currentElement.nextElementSibling;
-            }
-            
-            chunks.push(chunkHTML);
-        }
-        
-        // Generate selection boxes
-        generateSelectionBoxes();
-        
-        // Reset selection and display first chunk
-        lastSelection = 0;
-        currentChunk = 1;
-        if (chunks.length > 0) {
-            selectBox(1);
-        }
-        
-    } catch (error) {
-        console.error(`Error loading ${songName}.html:`, error);
-        document.getElementById('chunkContent').innerHTML = '<p>Error loading content</p>';
-    }
+function loadPracticeContent() {
+    chunks = PRACTICE_CHUNKS;
+    generateSelectionBoxes();
+    lastSelection = 0;
+    currentChunk = 1;
+    selectBox(1);
 }
 
 // Initialize camera
@@ -451,52 +294,18 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Check for debug mode in URL
     const urlParams = new URLSearchParams(window.location.search);
     const debugMode = urlParams.has('debug');
-    
+
     // Show/hide top-row based on debug mode
     const topRow = document.querySelector('.top-row');
     if (!debugMode && topRow) {
         topRow.style.display = 'none';
     }
-    
-    // Check if song index parameter is present
-    const songIndex = urlParams.get('index');
-    console.log('Song index parameter:', songIndex);
-    
-    if (songIndex !== null) {
-        // Load from localStorage
-        const songDataStr = localStorage.getItem('selectedSong');
-        if (songDataStr) {
-            const songData = JSON.parse(songDataStr);
-            console.log('Loaded song data:', songData);
-            
-            // Display song metadata
-            displaySongMetadata(songData);
-            
-            // Load lyrics from URL
-            if (songData.lyricsFile) {
-                await loadFromGoogleSheet(songData.lyricsFile);
-            } else {
-                document.getElementById('chunkContent').innerHTML = '<p>No lyrics available for this song.</p>';
-            }
-        } else {
-            console.log('No song data in localStorage');
-            await loadSong('wonderwall');
-        }
-    } else {
-        // Fallback to local song files
-        console.log('No index parameter, loading default song');
-        await loadSong('wonderwall');
-    }
-    
+
+    loadPracticeContent();
+
     initializeHands();
     startCamera();
-    
-    // Add song selector change handler
-    const songSelect = document.getElementById('songSelect');
-    songSelect.addEventListener('change', async (e) => {
-        await loadSong(e.target.value);
-    });
-    
+
     // Add keyboard navigation
     document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowRight') {
@@ -510,26 +319,13 @@ window.addEventListener('DOMContentLoaded', async () => {
             }
         }
     });
-    
+
     // Add back button handler
     const backButton = document.getElementById('backButton');
     backButton.addEventListener('click', () => {
         window.location.href = 'index.html';
     });
-    
-    // Add edit button handler
-    const editButton = document.getElementById('editButton');
-    editButton.addEventListener('click', () => {
-        const songDataStr = localStorage.getItem('selectedSong');
-        if (songDataStr) {
-            const songData = JSON.parse(songDataStr);
-            if (songData.lyricsFile) {
-                // Open the lyrics file URL in a new tab
-                window.open(songData.lyricsFile, '_blank');
-            }
-        }
-    });
-    
+
     // Add camera toggle button handler
     const cameraToggle = document.getElementById('cameraToggle');
     cameraToggle.addEventListener('click', () => {
@@ -541,41 +337,6 @@ window.addEventListener('DOMContentLoaded', async () => {
             resumeCamera();
             cameraToggle.textContent = '⏸️ Pause Camera';
             cameraToggle.style.background = '#667eea';
-        }
-    });
-    
-    // Add count-in button handler
-    const countInButton = document.getElementById('countInButton');
-    countInButton.addEventListener('click', () => {
-        // Get BPM from song metadata
-        const songDataStr = localStorage.getItem('selectedSong');
-        if (!songDataStr) {
-            console.log('No song data available for count-in');
-            return;
-        }
-        
-        const songData = JSON.parse(songDataStr);
-        const bpm = parseInt(songData.bpm) || 120;
-        const strokesPerBeat = 4; // Default to quarter notes
-        
-        // Disable button during playback
-        countInButton.disabled = true;
-        countInButton.textContent = '🥁 Counting...';
-        
-        // Play count-in using playtones.js
-        const success = window.playCountInTones(bpm, strokesPerBeat, 
-            () => {
-                // On complete
-                countInButton.disabled = false;
-                countInButton.textContent = '🥁 Count In';
-            },
-            null // No tick callback needed
-        );
-        
-        if (!success) {
-            console.error('Failed to start count-in');
-            countInButton.disabled = false;
-            countInButton.textContent = '🥁 Count In';
         }
     });
 });
