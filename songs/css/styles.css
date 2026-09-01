@@ -50,6 +50,36 @@ header h1 {
     transform: scale(1.05);
 }
 
+/* Camera on/off switch - sits left of the menu button. It only reflects
+   the shared camera stream's state (see enableSharedCamera/toggleSharedCamera
+   in app.js) and never shows a live preview, same as Play Mode's icon in
+   the song header. */
+.camera-toggle-btn {
+    position: absolute;
+    top: 10px;
+    right: 70px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid white;
+    color: white;
+    font-size: 1.4em;
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+    backdrop-filter: blur(10px);
+}
+
+.camera-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.camera-toggle-btn.active {
+    background: #10b981;
+    border-color: #10b981;
+}
+
 /* Menu Panel */
 .menu-panel {
     background: white;
@@ -643,6 +673,52 @@ body.song-page .chunk-tabs {
     #lyricsContent {
         font-size: 1.1em;
         line-height: 1.6;
+    }
+
+    /* Library view - the controls box used to flex-wrap its 7 filter
+       fields one-per-row on narrow screens, pushing the song grid down
+       past the fold. Packing them into a 2-column grid instead cuts that
+       to ~4 rows. */
+    body {
+        padding: 10px;
+    }
+
+    header {
+        margin-bottom: 6px;
+    }
+
+    .controls {
+        padding: 15px;
+        margin-bottom: 12px;
+    }
+
+    .search-section {
+        margin-bottom: 10px;
+    }
+
+    .filter-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .filter-section select {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .range-slider-container {
+        min-width: 0;
+        padding: 8px;
+    }
+
+    .range-slider-container label {
+        font-size: 0.8em;
+        white-space: nowrap;
+    }
+
+    #clearFilters {
+        grid-column: 1 / -1;
     }
 }
 

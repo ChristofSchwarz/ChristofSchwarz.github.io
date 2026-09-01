@@ -389,6 +389,7 @@ async function startGesture() {
         const videoElement = document.getElementById('cameraFeed');
         const cameraWrapper = document.querySelector('.camera-wrapper');
         const stream = await enableSharedCamera(); // defined in app.js
+        if (typeof updateCameraToggleLabel === 'function') updateCameraToggleLabel();
 
         videoElement.srcObject = stream;
         await videoElement.play().catch(() => {}); // iOS sometimes needs an explicit play() after re-attaching a stream

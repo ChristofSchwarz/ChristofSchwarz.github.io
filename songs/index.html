@@ -12,14 +12,12 @@
     <div id="libraryView" class="container">
         <header>
             <h1>My Music</h1>
+            <button id="cameraHeaderBtn" class="camera-toggle-btn" aria-label="Toggle camera" title="Camera off">🎥</button>
             <button id="menuBtn" class="menu-btn">☰</button>
         </header>
 
         <div id="menuPanel" class="menu-panel" style="display:none">
             <div class="menu-items">
-                <button id="cameraToggleBtn" class="upload-label">
-                    🎥 Enable Camera
-                </button>
                 <button id="refreshBtn" class="upload-label">
                     🔄 Refresh from Google Sheets
                 </button>
@@ -60,14 +58,6 @@
                     <option value="">👥 All Artists</option>
                 </select>
 
-                <div class="range-slider-container">
-                    <label>Year: <span id="yearRangeLabel">-</span></label>
-                    <div class="range-slider-wrapper">
-                        <input type="range" id="yearMin" min="1900" max="2100" value="1900" class="range-slider">
-                        <input type="range" id="yearMax" min="1900" max="2100" value="2100" class="range-slider">
-                    </div>
-                </div>
-
                 <select id="filterKey">
                     <option value="">🎼 All Keys</option>
                 </select>
@@ -77,6 +67,14 @@
                     <option value="1">🎹Instrumental</option>
                     <option value="0">🎤With Vocals</option>
                 </select>
+
+                <div class="range-slider-container">
+                    <label>Year: <span id="yearRangeLabel">-</span></label>
+                    <div class="range-slider-wrapper">
+                        <input type="range" id="yearMin" min="1900" max="2100" value="1900" class="range-slider">
+                        <input type="range" id="yearMax" min="1900" max="2100" value="2100" class="range-slider">
+                    </div>
+                </div>
 
                 <div class="range-slider-container">
                     <label>🥁 BPM: <span id="bpmRangeLabel">-</span></label>
