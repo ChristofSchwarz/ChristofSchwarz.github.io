@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-A static, client-side music lyrics library with hands-free "Play Mode" section navigation for live performances (see [instructions.txt](instructions.txt) for the original requirements — note the original spec asked for continuous head-turn scrolling, which was tried and abandoned as impractical; see Architecture below). This directory (`songs/`) is a subfolder of the `christofschwarz.github.io` GitHub Pages repo — there is no separate git root, build step, package manager, or backend. Everything runs by opening the HTML files directly or serving them statically.
+A static, client-side music lyrics library with hands-free "Play Mode" section navigation for live performances. The original requirements doc (`instructions.txt`, since removed as outdated) asked for continuous head-turn scrolling, which was tried and abandoned as impractical; see Architecture below. This directory (`songs/`) is a subfolder of the `christofschwarz.github.io` GitHub Pages repo — there is no separate git root, build step, package manager, or backend. Everything runs by opening the HTML files directly or serving them statically.
 
 ## Running / testing
 
@@ -30,4 +30,4 @@ A static, client-side music lyrics library with hands-free "Play Mode" section n
 
 ## Hosting constraint
 
-Per [instructions.txt](instructions.txt), the app must stay backend-free to remain hostable on GitHub Pages — the Google Sheets CSV fetch, localStorage caching, and in-browser MediaPipe/Tone.js processing are all deliberate choices to avoid needing a server. If a change would require a backend (e.g., server-side data writes, auth), flag it before implementing — an Azure serverless function was the agreed fallback, not an assumed default.
+The app must stay backend-free to remain hostable on GitHub Pages — the Google Sheets CSV fetch, localStorage caching, and in-browser MediaPipe/Tone.js processing are all deliberate choices to avoid needing a server. If a change would require a backend (e.g., server-side data writes, auth), flag it before implementing — an Azure serverless function was the agreed fallback, not an assumed default.
