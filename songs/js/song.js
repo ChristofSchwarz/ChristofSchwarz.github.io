@@ -53,6 +53,7 @@ function setupSongEventListeners() {
 function enterSongView(song) {
     currentSong = song;
     showSongViewContainer(); // defined in app.js
+    window.scrollTo(0, 0); // iOS Safari can carry a stale scroll offset that clips the header behind its own chrome
     displaySongInfo();
     loadLyrics();
 
@@ -386,14 +387,16 @@ async function startGesture() {
         // page or this first Play Mode tap) instead of asking for the
         // camera again - repeated getUserMedia calls are what triggered a
         // new permission prompt on iOS every time a song was opened.
+        // The self-view video stays out of sight on the song page (see
+        // .camera-wrapper's display:none in index.html) - only hand.html's
+        // practice tool shows a live preview. It's still needed here as
+        // MediaPipe's frame source, just never rendered.
         const videoElement = document.getElementById('cameraFeed');
-        const cameraWrapper = document.querySelector('.camera-wrapper');
         const stream = await enableSharedCamera(); // defined in app.js
         if (typeof updateCameraToggleLabel === 'function') updateCameraToggleLabel();
 
         videoElement.srcObject = stream;
         await videoElement.play().catch(() => {}); // iOS sometimes needs an explicit play() after re-attaching a stream
-        cameraWrapper.style.display = 'block';
 
         gestureEnabled = true;
         document.getElementById('gestureStatus').textContent = '✋';
@@ -465,9 +468,7 @@ function stopGesture() {
     // Play Mode can reuse it without a new iOS permission prompt. The
     // stream is only fully released via the camera toggle in app.js.
     const videoElement = document.getElementById('cameraFeed');
-    const cameraWrapper = document.querySelector('.camera-wrapper');
     if (videoElement) videoElement.srcObject = null;
-    if (cameraWrapper) cameraWrapper.style.display = 'none';
 
     if (hands) {
         hands.close();

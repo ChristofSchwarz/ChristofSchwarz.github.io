@@ -67,7 +67,9 @@ async function loadConfig() {
 
 function setupEventListeners() {
     document.getElementById('menuBtn').addEventListener('click', toggleMenu);
-    document.getElementById('cameraHeaderBtn').addEventListener('click', toggleSharedCamera);
+    document.querySelectorAll('[data-camera-toggle]').forEach(btn => {
+        btn.addEventListener('click', toggleSharedCamera);
+    });
     document.getElementById('refreshBtn').addEventListener('click', () => {
         loadFromGoogleSheets();
         setTimeout(() => {
@@ -177,23 +179,24 @@ function releaseSharedCamera() {
 }
 
 function updateCameraToggleLabel() {
-    const btn = document.getElementById('cameraHeaderBtn');
-    if (!btn) return;
     const isOn = sharedCameraStream && sharedCameraStream.active;
-    btn.classList.toggle('active', isOn);
-    btn.title = isOn ? 'Camera on - tap to turn off' : 'Camera off - tap to turn on';
+    document.querySelectorAll('[data-camera-toggle]').forEach(btn => {
+        btn.classList.toggle('active', isOn);
+        btn.title = isOn ? 'Camera on - tap to turn off' : 'Camera off - tap to turn on';
+    });
 }
 
 async function toggleSharedCamera() {
-    const btn = document.getElementById('cameraHeaderBtn');
     if (sharedCameraStream && sharedCameraStream.active) {
         if (typeof stopGesture === 'function') stopGesture();
         releaseSharedCamera();
         updateCameraToggleLabel();
         return;
     }
-    try {
+    document.querySelectorAll('[data-camera-toggle]').forEach(btn => {
         btn.title = 'Requesting camera...';
+    });
+    try {
         await enableSharedCamera();
     } catch (error) {
         alert('Could not access camera: ' + error.message);
