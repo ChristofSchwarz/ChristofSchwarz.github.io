@@ -470,6 +470,16 @@ body {
     text-overflow: ellipsis;
 }
 
+.song-header-info h2 {
+    font-size: 0.95em;
+    font-weight: 600;
+    opacity: 0.9;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .song-meta-tags {
     display: flex;
     /* justify-content:center directly on an *overflowing* scrollable flex
@@ -589,20 +599,13 @@ body {
     border-color: #7e22ce;
 }
 
-.chunk-tab .tab-number {
-    font-size: 0.85em;
-    font-weight: bold;
-    line-height: 1;
-}
-
 .chunk-tab .tab-title {
-    font-size: 0.65em;
-    opacity: 0.8;
-    margin-top: 2px;
+    font-size: 0.85em;
+    font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 70px;
+    max-width: 90px;
 }
 
 /* Compact Song Header */

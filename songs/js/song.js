@@ -116,9 +116,9 @@ function playCountIn() {
 
 function displaySongInfo() {
     document.getElementById('songTitle').textContent = currentSong.songName || 'Untitled';
+    document.getElementById('songArtist').textContent = currentSong.interpret || '';
 
     const tags = [];
-    if (currentSong.interpret) tags.push(`<span class="tag">${escapeHtml(currentSong.interpret)}</span>`);
     if (currentSong.year) tags.push(`<span class="tag">${escapeHtml(currentSong.year)}</span>`);
     if (currentSong.key) tags.push(`<span class="tag">🎼 ${escapeHtml(currentSong.key)}</span>`);
     if (currentSong.bpm) tags.push(`<span class="tag tag-bpm" id="bpmTag" title="Tap for count-in">${escapeHtml(currentSong.bpm)} bpm</span>`);
@@ -183,7 +183,6 @@ function generateChunkTabs() {
 
     tabsContainer.innerHTML = chunks.map((chunk, i) => `
         <div class="chunk-tab" data-index="${i}">
-            <div class="tab-number">${i + 1}</div>
             <div class="tab-title">${escapeHtml(chunk.title)}</div>
         </div>
     `).join('');
