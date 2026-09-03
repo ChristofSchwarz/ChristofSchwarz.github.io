@@ -46,6 +46,44 @@ function setupSongEventListeners() {
             fitLyricsText();
         }
     });
+
+    setupSwipeNavigation();
+}
+
+// Swipe left/right on the lyrics box as a manual fallback for next/previous
+// section, in case the camera doesn't pick up the hand gestures. Passive
+// listeners only observe the touch path - vertical scrolling inside the
+// (possibly still-overflowing) lyrics box keeps working natively; a swipe
+// only fires chunk navigation once the gesture is over and turns out to be
+// mostly horizontal.
+function setupSwipeNavigation() {
+    const chunkViewer = document.querySelector('.chunk-viewer');
+    const MIN_SWIPE_DISTANCE = 60; // px - well past an accidental brush
+    const MAX_VERTICAL_RATIO = 0.5; // vertical drift must stay well under the horizontal distance
+
+    let touchStartX = null;
+    let touchStartY = null;
+
+    chunkViewer.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1) return;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    chunkViewer.addEventListener('touchend', (e) => {
+        if (touchStartX === null) return;
+        const touch = e.changedTouches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+        touchStartX = null;
+        touchStartY = null;
+
+        if (Math.abs(deltaX) < MIN_SWIPE_DISTANCE) return;
+        if (Math.abs(deltaY) > Math.abs(deltaX) * MAX_VERTICAL_RATIO) return;
+
+        if (deltaX < 0) nextChunk();
+        else previousChunk();
+    }, { passive: true });
 }
 
 // Called by app.js's openSong() with the song object directly - no
