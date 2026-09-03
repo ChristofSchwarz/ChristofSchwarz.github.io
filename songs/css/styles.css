@@ -523,51 +523,6 @@ body {
     cursor: default;
 }
 
-/* Song Actions - compact single row, icon+text on desktop, icon-only on
-   narrow screens (see mobile block below) */
-.song-actions-bar {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding: 0 4px 4px;
-    margin-bottom: 8px;
-}
-
-.song-actions-bar button,
-.song-actions-bar a {
-    flex-shrink: 0;
-    padding: 8px 14px;
-    background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.9em;
-    transition: all 0.3s;
-    text-align: center;
-    text-decoration: none;
-    white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
-}
-
-.song-actions-bar button:hover,
-.song-actions-bar a:hover {
-    background: linear-gradient(135deg, #3b6cb8 0%, #2a5298 100%);
-    box-shadow: 0 6px 16px rgba(30, 60, 114, 0.4);
-}
-
-.song-actions-bar a[id*="Link"] {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.song-actions-bar a[id*="Link"]:hover {
-    background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
-    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
-}
-
 /* Chunk (section) tabs - a single row that scrolls horizontally instead of
    wrapping, so it never grows to a second line no matter how many sections
    the song has. */
@@ -705,7 +660,6 @@ body.song-page #songView {
 }
 
 body.song-page .song-header-bar,
-body.song-page .song-actions-bar,
 body.song-page .chunk-tabs {
     flex-shrink: 0;
 }
@@ -731,21 +685,6 @@ body.song-page .chunk-tabs {
     /* Gesture indicator - smaller text for smaller camera */
     .gesture-indicator-overlay {
         font-size: 1em;
-    }
-
-    /* Hide button text on mobile, show only icons */
-    .song-actions-bar .btn-text {
-        display: none;
-    }
-
-    .song-actions-bar .btn-icon {
-        display: inline;
-    }
-
-    .song-actions-bar button,
-    .song-actions-bar a {
-        padding: 10px 12px;
-        font-size: 1.2em;
     }
 
     #lyricsContent {

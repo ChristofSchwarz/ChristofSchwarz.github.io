@@ -26,7 +26,7 @@ A static, client-side music lyrics library with hands-free "Play Mode" section n
 
 **Count-in / tempo**: `js/playtones.js` generates a metronome count-in (Web Audio, using the song's `bpm`/beat data) triggered by the "Count In" button on the song view. `tone.html`/`css/tone.css` is a standalone Tone.js prototype/test page for count-in and WAV playback experiments — not wired into the main app.
 
-**Styling**: shared styles are in `css/styles.css`, including the song view (`.song-header-bar`, `.song-actions-bar`, `.chunk-tabs`, `.chunk-viewer`). `body.song-page` (toggled by the view-switching functions above) makes the song view a full-viewport flex column so the chunk viewer fills whatever space is left below the fixed-size header/actions/tabs — this is the default, not just a mobile media query, since a phone screen during a performance is the primary target. `hand.css` and `tone.css` scope additional styles to their respective standalone pages only.
+**Styling**: shared styles are in `css/styles.css`, including the song view (`.song-header-bar`, `.chunk-tabs`, `.chunk-viewer`). `body.song-page` (toggled by the view-switching functions above) makes the song view a full-viewport flex column so the chunk viewer fills whatever space is left below the fixed-size header/tabs — this is the default, not just a mobile media query, since a phone screen during a performance is the primary target. `hand.css` and `tone.css` scope additional styles to their respective standalone pages only.
 
 ## Hosting constraint
 
