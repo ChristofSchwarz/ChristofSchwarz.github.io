@@ -132,6 +132,19 @@ body {
     border-top: 1px solid #eee;
 }
 
+.menu-section-header {
+    margin-top: 10px;
+    font-size: 0.8em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #999;
+}
+
+.menu-items .menu-section-header:first-child {
+    margin-top: 0;
+}
+
 /* Controls Section */
 .controls {
     background: white;

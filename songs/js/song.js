@@ -8,7 +8,7 @@ let autoStartTimer = null;
 // Hand-gesture navigation. Continuous head-turn scrolling was tried first
 // but proved impractical on stage: ordinary head movement while playing
 // keyboard kept triggering accidental scrolling. Two deliberate, unlikely-
-// to-happen-by-accident hand gestures ("call me" / 3 fingers) replace it.
+// to-happen-by-accident hand gestures ("call me" / 4 fingers) replace it.
 let hands = null;
 let gestureEnabled = false;
 let handsFrameLoopId = null;
@@ -151,7 +151,8 @@ function displaySongInfo() {
 // current filter+sort result - so they respect whatever the user had set
 // on the filter page. The artist/key suggestions deliberately search
 // allSongs instead, ignoring the active filter, since the point is to
-// surface songs the filter might currently be hiding.
+// surface songs the filter might currently be hiding - listed out in full
+// under a section header rather than guessing which one to jump to.
 function renderSongSuggestions() {
     const container = document.getElementById('songSuggestions');
     container.innerHTML = '';
@@ -164,12 +165,19 @@ function renderSongSuggestions() {
         container.appendChild(btn);
     };
 
+    const addSectionHeader = (label) => {
+        const header = document.createElement('div');
+        header.className = 'menu-section-header';
+        header.textContent = label;
+        container.appendChild(header);
+    };
+
     const orderIndex = lastFilteredSongs.indexOf(currentSong); // lastFilteredSongs defined in app.js
     if (orderIndex !== -1) {
         const next = lastFilteredSongs[orderIndex + 1];
         const prev = lastFilteredSongs[orderIndex - 1];
-        if (next) addSuggestion(`Next in order: ${next.songName || 'Untitled'}`, next);
-        if (prev) addSuggestion(`Previous in order: ${prev.songName || 'Untitled'}`, prev);
+        if (next) addSuggestion(`⏭️ Next in order: ${next.songName || 'Untitled'}`, next);
+        if (prev) addSuggestion(`⏮️ Previous in order: ${prev.songName || 'Untitled'}`, prev);
     }
 
     const byTitle = (a, b) => (a.songName || '').localeCompare(b.songName || '');
@@ -179,7 +187,8 @@ function renderSongSuggestions() {
             .filter(s => s !== currentSong && s.interpret === currentSong.interpret)
             .sort(byTitle);
         if (sameArtist.length > 0) {
-            addSuggestion(`Other songs by ${currentSong.interpret}`, sameArtist[0]);
+            addSectionHeader(`Other songs by ${currentSong.interpret}`);
+            sameArtist.forEach(song => addSuggestion(song.songName || 'Untitled', song));
         }
     }
 
@@ -188,7 +197,8 @@ function renderSongSuggestions() {
             .filter(s => s !== currentSong && s.key === currentSong.key)
             .sort(byTitle);
         if (sameKey.length > 0) {
-            addSuggestion(`Other songs in ${currentSong.key}`, sameKey[0]);
+            addSectionHeader(`Other songs in ${currentSong.key}`);
+            sameKey.forEach(song => addSuggestion(song.songName || 'Untitled', song));
         }
     }
 }
@@ -528,14 +538,14 @@ function onHandResults(results) {
     processGesture(gesture);
 }
 
-// "call me" sign = next section, 3 fingers = previous section. Both were
+// "call me" sign = next section, 4 fingers = previous section. Both were
 // chosen specifically because they don't happen by accident while playing.
 function processGesture(gesture) {
     const now = Date.now();
     if (now - lastActionTime < ACTION_COOLDOWN) return;
 
     const isNext = gesture === '🤙 Call Me';
-    const isPrevious = gesture === '3 fingers';
+    const isPrevious = gesture === '4 fingers';
     if (!isNext && !isPrevious) {
         if (currentGesture !== lastProcessedGesture) lastProcessedGesture = null;
         return;
