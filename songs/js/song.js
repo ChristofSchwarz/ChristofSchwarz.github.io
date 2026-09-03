@@ -29,8 +29,8 @@ function setupSongEventListeners() {
         }
     });
 
-    document.getElementById('playModeBtn').addEventListener('click', togglePlayMode);
-    document.getElementById('countInBtn').addEventListener('click', playCountIn);
+    document.getElementById('cameraSongBtn').addEventListener('click', toggleCameraAndGesture);
+    document.getElementById('songMenuBtn').addEventListener('click', toggleSongMenu);
 
     // Keyboard fallback for testing without a camera
     document.addEventListener('keydown', (e) => {
@@ -54,6 +54,7 @@ function enterSongView(song) {
     currentSong = song;
     showSongViewContainer(); // defined in app.js
     window.scrollTo(0, 0); // iOS Safari can carry a stale scroll offset that clips the header behind its own chrome
+    document.getElementById('songMenuPanel').style.display = 'none';
     displaySongInfo();
     loadLyrics();
 
@@ -71,7 +72,9 @@ function exitSongView() {
     showLibraryView(); // defined in app.js
 }
 
-// Count-in button handler using playtones.js
+// Count-in lives behind a tap on the bpm tag itself (see displaySongInfo)
+// rather than a dedicated button - the bpm value is already on screen, so
+// a separate button was redundant with it.
 function playCountIn() {
     const bpm = parseFloat(currentSong.bpm);
 
@@ -83,17 +86,20 @@ function playCountIn() {
     // Get strokes per beat from song data, default to 4
     const strokesPerBeat = parseInt(currentSong.beat) || 4;
 
-    // Disable button during count-in
-    const countInBtn = document.getElementById('countInBtn');
-    countInBtn.disabled = true;
-    countInBtn.innerHTML = '<span class="btn-icon">🥁</span><span class="btn-text"> Counting...</span>';
+    const bpmTag = document.getElementById('bpmTag');
+    if (bpmTag) {
+        bpmTag.style.pointerEvents = 'none';
+        bpmTag.classList.add('counting');
+    }
 
     // Play count-in using playtones.js library (from window scope)
     const success = window.playCountInTones(bpm, strokesPerBeat,
         // onComplete callback
         () => {
-            countInBtn.disabled = false;
-            countInBtn.innerHTML = '<span class="btn-icon">🥁</span><span class="btn-text"> Count In</span>';
+            if (bpmTag) {
+                bpmTag.style.pointerEvents = 'auto';
+                bpmTag.classList.remove('counting');
+            }
         },
         // onTick callback (optional - for visual feedback)
         null
@@ -101,8 +107,10 @@ function playCountIn() {
 
     if (!success) {
         alert('Could not play count-in. Invalid BPM or strokes per beat.');
-        countInBtn.disabled = false;
-        countInBtn.innerHTML = '<span class="btn-icon">🥁</span><span class="btn-text"> Count In</span>';
+        if (bpmTag) {
+            bpmTag.style.pointerEvents = 'auto';
+            bpmTag.classList.remove('counting');
+        }
     }
 }
 
@@ -110,11 +118,14 @@ function displaySongInfo() {
     document.getElementById('songTitle').textContent = currentSong.songName || 'Untitled';
 
     const tags = [];
-    if (currentSong.interpret) tags.push(`<span class="tag">🎤 ${escapeHtml(currentSong.interpret)}</span>`);
+    if (currentSong.interpret) tags.push(`<span class="tag">${escapeHtml(currentSong.interpret)}</span>`);
     if (currentSong.year) tags.push(`<span class="tag">${escapeHtml(currentSong.year)}</span>`);
     if (currentSong.key) tags.push(`<span class="tag">🎼 ${escapeHtml(currentSong.key)}</span>`);
-    if (currentSong.bpm) tags.push(`<span class="tag">🥁 ${escapeHtml(currentSong.bpm)} bpm</span>`);
+    if (currentSong.bpm) tags.push(`<span class="tag tag-bpm" id="bpmTag" title="Tap for count-in">${escapeHtml(currentSong.bpm)} bpm</span>`);
     document.getElementById('songMeta').innerHTML = tags.join('');
+
+    const bpmTag = document.getElementById('bpmTag');
+    if (bpmTag) bpmTag.addEventListener('click', playCountIn);
 
     // Set up links
     const originalLink = document.getElementById('originalLink');
@@ -131,19 +142,6 @@ function displaySongInfo() {
         karaokeLink.style.display = 'inline-block';
     } else {
         karaokeLink.style.display = 'none';
-    }
-
-    // Disable Count In button if no BPM
-    const countInBtn = document.getElementById('countInBtn');
-    const bpm = parseFloat(currentSong.bpm);
-    if (!bpm || bpm <= 0) {
-        countInBtn.disabled = true;
-        countInBtn.style.opacity = '0.5';
-        countInBtn.style.cursor = 'not-allowed';
-    } else {
-        countInBtn.disabled = false;
-        countInBtn.style.opacity = '1';
-        countInBtn.style.cursor = 'pointer';
     }
 }
 
@@ -173,6 +171,16 @@ function splitIntoChunks(html) {
 
 function generateChunkTabs() {
     const tabsContainer = document.getElementById('chunkTabs');
+
+    // A single chunk means the doc has no <h2> sections to navigate between -
+    // the tab row would just be dead chrome eating space from the lyrics.
+    if (chunks.length <= 1) {
+        tabsContainer.style.display = 'none';
+        tabsContainer.innerHTML = '';
+        return;
+    }
+    tabsContainer.style.display = '';
+
     tabsContainer.innerHTML = chunks.map((chunk, i) => `
         <div class="chunk-tab" data-index="${i}">
             <div class="tab-number">${i + 1}</div>
@@ -358,12 +366,25 @@ async function loadGoogleDocLyrics(docUrl) {
     }
 }
 
-async function togglePlayMode() {
-    if (!gestureEnabled) {
-        await startGesture();
-    } else {
+// The camera button is the single on/off control for both the shared
+// stream and gesture recognition - there's no separate "Play Mode" toggle,
+// since turning the camera off inherently stops gestures too. Checked
+// against the stream itself (not gestureEnabled) so a tap during the
+// ~500ms auto-start window after opening a song still turns it off rather
+// than racing to (re)start it.
+async function toggleCameraAndGesture() {
+    if (sharedCameraStream && sharedCameraStream.active) {
         stopGesture();
+        releaseSharedCamera(); // both defined in app.js
+        if (typeof updateCameraToggleLabel === 'function') updateCameraToggleLabel();
+    } else {
+        await startGesture();
     }
+}
+
+function toggleSongMenu() {
+    const menuPanel = document.getElementById('songMenuPanel');
+    menuPanel.style.display = menuPanel.style.display === 'none' ? 'block' : 'none';
 }
 
 async function startGesture() {
@@ -400,7 +421,6 @@ async function startGesture() {
 
         gestureEnabled = true;
         document.getElementById('gestureStatus').textContent = '✋';
-        document.getElementById('playModeBtn').classList.add('active');
 
         // Drive Hands with our own frame loop rather than MediaPipe's
         // Camera helper, which internally calls getUserMedia itself and
@@ -464,9 +484,9 @@ function stopGesture() {
     }
 
     // Detach the video element, but deliberately do NOT stop the shared
-    // stream's tracks here - the stream stays alive so the next song's
-    // Play Mode can reuse it without a new iOS permission prompt. The
-    // stream is only fully released via the camera toggle in app.js.
+    // stream's tracks here - callers that want the stream fully released
+    // (the camera toggle buttons) call releaseSharedCamera() separately,
+    // so switching songs can reuse the stream without a new iOS prompt.
     const videoElement = document.getElementById('cameraFeed');
     if (videoElement) videoElement.srcObject = null;
 
@@ -474,7 +494,4 @@ function stopGesture() {
         hands.close();
         hands = null;
     }
-
-    const playModeBtn = document.getElementById('playModeBtn');
-    if (playModeBtn) playModeBtn.classList.remove('active');
 }

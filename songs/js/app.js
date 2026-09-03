@@ -67,9 +67,10 @@ async function loadConfig() {
 
 function setupEventListeners() {
     document.getElementById('menuBtn').addEventListener('click', toggleMenu);
-    document.querySelectorAll('[data-camera-toggle]').forEach(btn => {
-        btn.addEventListener('click', toggleSharedCamera);
-    });
+    // The song page's camera button has its own handler in song.js (it
+    // also drives gesture recognition, not just the raw stream) - only
+    // the library header button uses this generic stream-only toggle.
+    document.getElementById('cameraHeaderBtn').addEventListener('click', toggleSharedCamera);
     document.getElementById('refreshBtn').addEventListener('click', () => {
         loadFromGoogleSheets();
         setTimeout(() => {
@@ -219,7 +220,11 @@ function showLibraryView() {
 
 function showSongViewContainer() {
     document.getElementById('libraryView').style.display = 'none';
-    document.getElementById('songView').style.display = 'block';
+    // Leave display unset here (not 'block') so the CSS rule
+    // `body.song-page #songView { display: flex }` can take over - an
+    // inline 'block' would win over it and break .chunk-viewer's flex:1,
+    // leaving it sized to its own content instead of filling the screen.
+    document.getElementById('songView').style.display = '';
     document.body.classList.add('song-page');
 }
 
@@ -587,7 +592,7 @@ async function displaySongs(songs) {
             <div class="metadata">
                 ${song.year ? `<span class="tag">${escapeHtml(song.year)}</span>` : ''}
                 ${song.key ? `<span class="tag">🎼 ${escapeHtml(song.key)}</span>` : ''}
-                ${song.bpm ? `<span class="tag">🥁 ${escapeHtml(song.bpm)} bpm</span>` : ''}
+                ${song.bpm ? `<span class="tag">${escapeHtml(song.bpm)} bpm</span>` : ''}
             </div>
         </div>
     `}).join('');

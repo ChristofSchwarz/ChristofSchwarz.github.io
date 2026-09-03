@@ -101,14 +101,18 @@
                 <div id="songMeta" class="song-meta-tags"></div>
             </div>
             <button id="cameraSongBtn" class="header-icon-btn" data-camera-toggle aria-label="Toggle camera" title="Camera off">🎥</button>
-            <button id="playModeBtn" class="header-icon-btn" aria-label="Toggle gesture control">✋</button>
+            <button id="songMenuBtn" class="header-icon-btn" aria-label="Menu">☰</button>
         </header>
 
+        <div id="songMenuPanel" class="menu-panel" style="display:none">
+            <div class="menu-items">
+                <a id="editLink" target="_blank" class="upload-label">✏️ Edit Song</a>
+            </div>
+        </div>
+
         <nav class="song-actions-bar">
-            <button id="countInBtn"><span class="btn-icon">🥁</span><span class="btn-text"> Count In</span></button>
             <a id="originalLink" target="_blank" style="display:none"><span class="btn-icon">🎵</span><span class="btn-text"> Original</span></a>
             <a id="karaokeLink" target="_blank" style="display:none"><span class="btn-icon">🎤</span><span class="btn-text"> Karaoke</span></a>
-            <a id="editLink" target="_blank"><span class="btn-icon">✏️</span><span class="btn-text"> Edit</span></a>
         </nav>
 
         <div class="camera-wrapper" style="display:none">
