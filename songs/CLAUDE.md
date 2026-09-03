@@ -26,10 +26,14 @@ A static, client-side music lyrics library with hands-free "Play Mode" section n
 
 **Camera**: requested at most once per session via `enableSharedCamera()` in `app.js` (either from the library menu's "Enable Camera" button, or lazily on the first Play Mode tap), and the `MediaStream` is kept alive and reused across every song — `stopGesture()` deliberately does *not* stop the stream's tracks, only detaches the video element; the stream is only released via the camera toggle. This matters specifically for iOS Safari, which re-prompts for camera access on every `getUserMedia` call and on every full page navigation — both of which the SPA architecture and stream reuse avoid. Frame delivery to MediaPipe is driven by a manual `requestAnimationFrame` loop rather than MediaPipe's own `Camera` helper (from `@mediapipe/camera_utils`), because that helper calls `getUserMedia` internally and would silently open a second, independent stream.
 
-**Count-in / tempo**: `js/playtones.js` generates a metronome count-in (Web Audio, using the song's `bpm`/beat data) triggered by the "Count In" button on the song view. `tone.html`/`css/tone.css` is a standalone Tone.js prototype/test page for count-in and WAV playback experiments — not wired into the main app.
+**Count-in / tempo**: `js/playtones.js` generates a metronome count-in (Web Audio, using the song's `bpm`/beat data) triggered by tapping the bpm tag in the song header (`playCountIn()` in `song.js`) — there's no dedicated button for it. `tone.html`/`css/tone.css` is a standalone Tone.js prototype/test page for count-in and WAV playback experiments — not wired into the main app.
 
 **Styling**: shared styles are in `css/styles.css`, including the song view (`.song-header-bar`, `.chunk-tabs`, `.chunk-viewer`). `body.song-page` (toggled by the view-switching functions above) makes the song view a full-viewport flex column so the chunk viewer fills whatever space is left below the fixed-size header/tabs — this is the default, not just a mobile media query, since a phone screen during a performance is the primary target. `hand.css` and `tone.css` scope additional styles to their respective standalone pages only.
 
 ## Hosting constraint
 
 The app must stay backend-free to remain hostable on GitHub Pages — the Google Sheets CSV fetch, localStorage caching, and in-browser MediaPipe/Tone.js processing are all deliberate choices to avoid needing a server. If a change would require a backend (e.g., server-side data writes, auth), flag it before implementing — an Azure serverless function was the agreed fallback, not an assumed default.
+
+## Versioning
+
+`APP_VERSION` in `js/app.js` (shown as the last entry in the library menu, `#appVersion`) follows `MAJOR.MINOR.PATCH`, starting at `0.8.0`. Every time the user asks to publish/push, bump at least the PATCH digit before committing — `0.8.0` → `0.8.1` → … → `0.8.9` → `0.8.10` (plain integer, not reset at 10) — as part of that same commit. Don't bump MINOR or MAJOR on your own judgment; ask the user first (e.g. when a publish bundles a significant new feature vs. a small fix/tweak) and only change those digits if they say yes.

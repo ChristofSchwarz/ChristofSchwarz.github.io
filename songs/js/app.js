@@ -9,8 +9,13 @@ let lastFilteredSongs = [];
 
 const FALLBACK_GOOGLE_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/1nJVZRkxuoC8G8dklkVRlNb9aIIYBG-l-Nl-LaGh5MwQ/export?format=csv';
 
+// Bumped on every publish - see the "Versioning" section in CLAUDE.md for
+// the policy (patch by default, ask before minor/major).
+const APP_VERSION = '0.8.0';
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
+    document.getElementById('appVersion').textContent = `v${APP_VERSION}`;
     await loadConfig();
     setupEventListeners();
 

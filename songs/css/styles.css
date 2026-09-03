@@ -342,6 +342,15 @@ body {
     text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
 }
 
+.menu-version {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+    font-size: 0.75em;
+    color: #bbb;
+    text-align: center;
+}
+
 /* Song Grid */
 .song-grid {
     display: grid;
