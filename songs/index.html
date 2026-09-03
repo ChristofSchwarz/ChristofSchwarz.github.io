@@ -19,7 +19,7 @@
         <div id="menuPanel" class="menu-panel" style="display:none">
             <div class="menu-items">
                 <button id="refreshBtn" class="upload-label">
-                    🔄 Refresh from Google Sheets
+                    🔄 Refresh from Google Drive
                 </button>
                 <a id="editSheetLink" target="_blank" class="upload-label">
                     ✏️ Edit linked Google Sheet
@@ -125,6 +125,13 @@
 
         <div class="chunk-viewer">
             <div id="lyricsContent"></div>
+        </div>
+    </div>
+
+    <div id="refreshOverlay" class="refresh-overlay" style="display:none">
+        <div class="refresh-overlay-card">
+            <div class="refresh-spinner"></div>
+            <p id="refreshOverlayText">Refreshing…</p>
         </div>
     </div>
 

@@ -75,12 +75,7 @@ function setupEventListeners() {
     // also drives gesture recognition, not just the raw stream) - only
     // the library header button uses this generic stream-only toggle.
     document.getElementById('cameraHeaderBtn').addEventListener('click', toggleSharedCamera);
-    document.getElementById('refreshBtn').addEventListener('click', () => {
-        loadFromGoogleSheets();
-        setTimeout(() => {
-            document.getElementById('menuPanel').style.display = 'none';
-        }, 1500);
-    });
+    document.getElementById('refreshBtn').addEventListener('click', refreshAllFromGoogleDrive);
     document.getElementById('excelUpload').addEventListener('change', handleFileUpload);
     document.getElementById('searchInput').addEventListener('input', filterSongs);
     document.getElementById('sortBy').addEventListener('change', filterSongs);
@@ -632,6 +627,53 @@ async function loadFromGoogleSheets() {
 
         // Fallback to localStorage if available
         loadSavedData();
+    }
+}
+
+// The menu's "Refresh from Google Drive" action - refreshes the sheet
+// metadata, then re-fetches and re-caches every song's Google Doc lyrics
+// (see fetchAndCacheGoogleDoc in song.js) so the whole library is ready
+// offline, not just the songs the user happened to open before. Fetching
+// dozens of docs can take tens of seconds, so it's shown as a blocking
+// overlay with running progress rather than a silent background task.
+async function refreshAllFromGoogleDrive() {
+    const overlay = document.getElementById('refreshOverlay');
+    const overlayText = document.getElementById('refreshOverlayText');
+    document.getElementById('menuPanel').style.display = 'none';
+    overlay.style.display = 'flex';
+    overlayText.textContent = 'Refreshing song list…';
+
+    try {
+        await loadFromGoogleSheets();
+
+        const docSongs = songsData.filter(s => s.lyricsFile && s.lyricsFile.includes('docs.google.com/document'));
+        let done = 0;
+        overlayText.textContent = `Refreshing lyrics… 0 / ${docSongs.length}`;
+
+        const CONCURRENCY = 5;
+        let cursor = 0;
+        async function worker() {
+            while (cursor < docSongs.length) {
+                const song = docSongs[cursor++];
+                try {
+                    await fetchAndCacheGoogleDoc(song.lyricsFile); // defined in song.js
+                } catch (error) {
+                    console.error(`Failed to refresh lyrics for "${song.songName}":`, error);
+                }
+                done++;
+                overlayText.textContent = `Refreshing lyrics… ${done} / ${docSongs.length}`;
+            }
+        }
+        await Promise.all(Array.from({ length: Math.min(CONCURRENCY, docSongs.length) }, worker));
+
+        overlayText.textContent = `✓ Refreshed ${docSongs.length} song${docSongs.length !== 1 ? 's' : ''} for offline use`;
+        await new Promise(resolve => setTimeout(resolve, 1200));
+    } catch (error) {
+        console.error('Refresh from Google Drive failed:', error);
+        overlayText.textContent = '❌ Refresh failed - check your connection';
+        await new Promise(resolve => setTimeout(resolve, 1800));
+    } finally {
+        overlay.style.display = 'none';
     }
 }
 

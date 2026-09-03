@@ -366,50 +366,79 @@ function sanitizeExternalHtml(rootElement) {
     });
 }
 
+function googleDocIdFromUrl(docUrl) {
+    const match = docUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    return match ? match[1] : null;
+}
+
+function lyricsCacheKey(docId) {
+    return `lyricsCache:${docId}`;
+}
+
+// Fetches a Google Doc's lyrics as sanitized HTML and stores it in
+// localStorage keyed by document ID, so it's available offline next time.
+// Shared by the per-song loader below and the library menu's bulk
+// "Refresh from Google Drive" (see refreshAllFromGoogleDrive in app.js).
+async function fetchAndCacheGoogleDoc(docUrl) {
+    const docId = googleDocIdFromUrl(docUrl);
+    if (!docId) throw new Error('Invalid Google Docs URL');
+
+    const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=html`;
+    const response = await fetch(exportUrl);
+    if (!response.ok) {
+        throw new Error('Failed to fetch Google Doc. Make sure the document is set to "Anyone with the link can view".');
+    }
+    const html = await response.text();
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const bodyContent = doc.querySelector('body');
+    if (!bodyContent) throw new Error('Could not parse Google Doc content');
+
+    sanitizeExternalHtml(bodyContent);
+    const sanitizedHtml = bodyContent.innerHTML;
+    localStorage.setItem(lyricsCacheKey(docId), sanitizedHtml);
+    return sanitizedHtml;
+}
+
+function getCachedGoogleDoc(docUrl) {
+    const docId = googleDocIdFromUrl(docUrl);
+    return docId ? localStorage.getItem(lyricsCacheKey(docId)) : null;
+}
+
+function renderLyricsHtml(html) {
+    chunks = splitIntoChunks(html);
+    generateChunkTabs();
+    selectChunk(0);
+}
+
 async function loadGoogleDocLyrics(docUrl) {
     const lyricsContainer = document.getElementById('lyricsContent');
-    try {
+
+    // Cache-first: a cached copy renders instantly and works offline. Only
+    // show the loading/error states below when there's nothing cached yet -
+    // once something's on screen, a background refresh failure (e.g. no
+    // signal) shouldn't rip it away.
+    const cachedHtml = getCachedGoogleDoc(docUrl);
+    if (cachedHtml) {
+        renderLyricsHtml(cachedHtml);
+    } else {
         lyricsContainer.innerHTML = '<p>⏳ Loading lyrics from Google Docs...</p>';
+    }
 
-        // Extract document ID from URL
-        const docIdMatch = docUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
-        if (!docIdMatch) {
-            throw new Error('Invalid Google Docs URL');
+    try {
+        const freshHtml = await fetchAndCacheGoogleDoc(docUrl);
+        if (!cachedHtml) {
+            renderLyricsHtml(freshHtml);
         }
-
-        const docId = docIdMatch[1];
-
-        // Use Google Docs export URL to get HTML
-        const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=html`;
-
-        const response = await fetch(exportUrl);
-        if (!response.ok) {
-            throw new Error('Failed to fetch Google Doc. Make sure the document is set to "Anyone with the link can view".');
-        }
-
-        const html = await response.text();
-
-        // Parse and clean the HTML
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-
-        const bodyContent = doc.querySelector('body');
-        if (!bodyContent) {
-            throw new Error('Could not parse Google Doc content');
-        }
-
-        sanitizeExternalHtml(bodyContent);
-
-        chunks = splitIntoChunks(bodyContent.innerHTML);
-        generateChunkTabs();
-        selectChunk(0);
-
     } catch (error) {
-        lyricsContainer.innerHTML = `
-            <p style="color: #d32f2f;">❌ Error loading lyrics from Google Docs:</p>
-            <p>${escapeHtml(error.message)}</p>
-            <p><em>Make sure the document is shared as "Anyone with the link can view"</em></p>
-        `;
+        if (!cachedHtml) {
+            lyricsContainer.innerHTML = `
+                <p style="color: #d32f2f;">❌ Error loading lyrics from Google Docs:</p>
+                <p>${escapeHtml(error.message)}</p>
+                <p><em>Make sure the document is shared as "Anyone with the link can view"</em></p>
+            `;
+        }
     }
 }
 
