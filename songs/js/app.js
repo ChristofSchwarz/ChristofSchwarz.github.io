@@ -2,6 +2,10 @@
 let songsData = [];
 let allSongs = [];
 let config = {};
+// The current filter+sort result, kept around so song.js's "Next/Previous
+// in order" suggestions can navigate through it without recomputing the
+// filter state from the (hidden, since we're in song view) library form.
+let lastFilteredSongs = [];
 
 const FALLBACK_GOOGLE_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/1nJVZRkxuoC8G8dklkVRlNb9aIIYBG-l-Nl-LaGh5MwQ/export?format=csv';
 
@@ -513,6 +517,7 @@ function filterSongs() {
         }
     });
 
+    lastFilteredSongs = filtered;
     displaySongs(filtered);
 }
 
@@ -583,16 +588,17 @@ async function displaySongs(songs) {
 
     // Render cards using cached validation results
     songList.innerHTML = songs.map((song, index) => {
-        const instrumentalClass = song.instrumental == '1' ? ' song-card-instrumental' : '';
-        const errorClass = song.lyricsValid === false ? ' song-card-error' : '';
+        const isInstrumental = song.instrumental == '1';
+        const isMissingLyrics = song.lyricsValid === false;
         return `
-        <div class="song-card${instrumentalClass}${errorClass}" onclick="openSong(${allSongs.indexOf(song)})">
-            <h3>${escapeHtml(song.songName) || 'Untitled'}</h3>
+        <div class="song-card" onclick="openSong(${allSongs.indexOf(song)})">
+            <h3>${escapeHtml(song.songName) || 'Untitled'}${isInstrumental ? '<span class="tag-instrumental">🎹</span>' : ''}</h3>
             <p class="artist">${escapeHtml(song.interpret) || 'Unknown Artist'}</p>
             <div class="metadata">
                 ${song.year ? `<span class="tag">${escapeHtml(song.year)}</span>` : ''}
                 ${song.key ? `<span class="tag">🎼 ${escapeHtml(song.key)}</span>` : ''}
                 ${song.bpm ? `<span class="tag">${escapeHtml(song.bpm)} bpm</span>` : ''}
+                ${isMissingLyrics ? '<span class="tag tag-missing-lyrics">❌ Missing lyrics</span>' : ''}
             </div>
         </div>
     `}).join('');

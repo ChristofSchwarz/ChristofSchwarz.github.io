@@ -143,6 +143,54 @@ function displaySongInfo() {
     } else {
         karaokeLink.style.display = 'none';
     }
+
+    renderSongSuggestions();
+}
+
+// "Next/Previous in order" walk lastFilteredSongs (app.js) - the library's
+// current filter+sort result - so they respect whatever the user had set
+// on the filter page. The artist/key suggestions deliberately search
+// allSongs instead, ignoring the active filter, since the point is to
+// surface songs the filter might currently be hiding.
+function renderSongSuggestions() {
+    const container = document.getElementById('songSuggestions');
+    container.innerHTML = '';
+
+    const addSuggestion = (label, song) => {
+        const btn = document.createElement('button');
+        btn.className = 'upload-label';
+        btn.textContent = label;
+        btn.addEventListener('click', () => openSong(allSongs.indexOf(song))); // openSong defined in app.js
+        container.appendChild(btn);
+    };
+
+    const orderIndex = lastFilteredSongs.indexOf(currentSong); // lastFilteredSongs defined in app.js
+    if (orderIndex !== -1) {
+        const next = lastFilteredSongs[orderIndex + 1];
+        const prev = lastFilteredSongs[orderIndex - 1];
+        if (next) addSuggestion(`Next in order: ${next.songName || 'Untitled'}`, next);
+        if (prev) addSuggestion(`Previous in order: ${prev.songName || 'Untitled'}`, prev);
+    }
+
+    const byTitle = (a, b) => (a.songName || '').localeCompare(b.songName || '');
+
+    if (currentSong.interpret) {
+        const sameArtist = allSongs
+            .filter(s => s !== currentSong && s.interpret === currentSong.interpret)
+            .sort(byTitle);
+        if (sameArtist.length > 0) {
+            addSuggestion(`Other songs by ${currentSong.interpret}`, sameArtist[0]);
+        }
+    }
+
+    if (currentSong.key) {
+        const sameKey = allSongs
+            .filter(s => s !== currentSong && s.key === currentSong.key)
+            .sort(byTitle);
+        if (sameKey.length > 0) {
+            addSuggestion(`Other songs in ${currentSong.key}`, sameKey[0]);
+        }
+    }
 }
 
 // Split a lyrics HTML string into sections at each <h2>. A song with no
