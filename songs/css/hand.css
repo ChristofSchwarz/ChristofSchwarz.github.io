@@ -1,44 +1,47 @@
-.button-ribbon {
-    display: flex;
-    gap: 10px;
-    /* padding: 15px 0; */
-    margin-bottom: 10px;
-    /* border-bottom: 2px solid #e0e0e0; */
+/* Header matches the song viewer's: thin fixed icon buttons pinned to the
+   viewport corners (immune to scrolling as this page's content grows)
+   flanking a centered white title - see #backBtn/#cameraSongBtn in the
+   main styles.css for the pattern this mirrors. */
+body {
+    padding-top: max(8px, env(safe-area-inset-top));
 }
 
-.ribbon-button {
-    padding: 8px 16px;
-    border-radius: 5px;
-    border: 2px solid #667eea;
-    background: #667eea;
+.hand-header-bar {
+    min-height: 42px;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.hand-header-bar h1 {
     color: white;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    font-size: 1.3em;
+    padding: 8px 52px 0;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
 }
 
-.ribbon-button:hover {
-    background: #5568d3;
-    border-color: #5568d3;
+#backButton {
+    left: 8px;
+}
+
+#cameraToggle {
+    right: 8px;
 }
 
 .top-row {
     display: flex;
-    gap: 20px;
+    gap: 12px;
     margin-bottom: 30px;
     align-items: stretch;
 }
 
 .video-container {
-    width: 240px;
-    height: 180px;
+    flex: 1 1 50%;
+    aspect-ratio: 4 / 3;
     border-radius: 15px;
     overflow: hidden;
     box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     border: 3px solid #667eea;
     background: #f5f5f5;
-    flex-shrink: 0;
     position: relative;
 }
 
@@ -66,15 +69,15 @@
     padding: 15px;
     border-radius: 12px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    flex: 1;
+    flex: 1 1 50%;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-width: 200px;
 }
 
 .finger-count {
-    font-size: 32px;
+    font-size: 16px;
     font-weight: bold;
     color: #667eea;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
@@ -88,25 +91,6 @@
     font-size: 14px;
     color: #666;
     margin-top: 5px;
-}
-
-.info-box {
-    background: #e3f2fd;
-    border-left: 4px solid #2196f3;
-    padding: 15px;
-    border-radius: 8px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-width: 250px;
-}
-
-.info-box p {
-    color: #1565c0;
-    font-size: 14px;
-    line-height: 1.5;
-    margin: 0;
 }
 
 .selection-boxes {
@@ -170,7 +154,13 @@
 }
 
 .chunk-viewer {
-    margin-top: 0;
+    /* .chunk-viewer in the shared styles.css (the real song page's lyrics
+       box) sets a flex/negative-margin full-bleed layout that would
+       otherwise leak onto this identically-named element here too. */
+    margin: 0;
+    flex: none;
+    position: static;
+    overflow-y: visible;
     background: white;
     border-radius: 12px;
     border: 3px solid #667eea;

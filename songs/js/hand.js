@@ -262,11 +262,13 @@ async function startCamera() {
         await camera.start();
         cameraActive = true;
         statusText.textContent = 'Camera ready. Show your hand!';
-        
+        document.getElementById('cameraToggle').classList.add('active');
+
     } catch (error) {
         console.error('Error accessing camera:', error);
         statusText.textContent = 'Error: Could not access camera';
         fingerCountDisplay.textContent = '❌';
+        document.getElementById('cameraToggle').classList.remove('active');
     }
 }
 
@@ -326,17 +328,19 @@ window.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'index.html';
     });
 
-    // Add camera toggle button handler
+    // Add camera toggle button handler - matches the camera on/off icon
+    // button used elsewhere (green once the stream actually starts, see
+    // startCamera()'s success/catch paths)
     const cameraToggle = document.getElementById('cameraToggle');
     cameraToggle.addEventListener('click', () => {
         if (cameraActive) {
             stopCamera();
-            cameraToggle.textContent = '▶️ Play Camera';
-            cameraToggle.style.background = '#4caf50';
+            cameraToggle.classList.remove('active');
+            cameraToggle.title = 'Camera off - tap to turn on';
         } else {
             resumeCamera();
-            cameraToggle.textContent = '⏸️ Pause Camera';
-            cameraToggle.style.background = '#667eea';
+            cameraToggle.classList.add('active');
+            cameraToggle.title = 'Camera on - tap to turn off';
         }
     });
 });

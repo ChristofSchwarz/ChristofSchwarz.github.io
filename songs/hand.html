@@ -12,14 +12,11 @@
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1 id="pageTitle">👋 Hand Gesture Recognition</h1>
+        <header class="hand-header-bar">
+            <button id="backButton" class="header-icon-btn" aria-label="Back">←</button>
+            <h1 id="pageTitle">Practice Gestures</h1>
+            <button id="cameraToggle" class="header-icon-btn" aria-label="Toggle camera" title="Camera on">🎥</button>
         </header>
-
-        <div class="button-ribbon">
-            <button id="backButton" class="ribbon-button">← Back</button>
-            <button id="cameraToggle" class="ribbon-button">⏸️ Pause Camera</button>
-        </div>
 
         <div class="top-row">
             <div class="video-container">
@@ -30,10 +27,6 @@
             <div class="detection-display">
                 <div class="finger-count" id="fingerCount">-</div>
                 <div class="status" id="statusText">Initializing camera...</div>
-            </div>
-
-            <div class="info-box">
-                <p><strong>Instructions:</strong> Show your hand to the camera. Make the <strong>🤙 call-me</strong> sign to go to the next practice section, or show <strong>4 fingers</strong> to go to the previous one - these are the same two gestures used in the real song viewer.</p>
             </div>
         </div>
 
