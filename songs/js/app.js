@@ -11,7 +11,7 @@ const FALLBACK_GOOGLE_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/1nJVZ
 
 // Bumped on every publish - see the "Versioning" section in CLAUDE.md for
 // the policy (patch by default, ask before minor/major).
-const APP_VERSION = '0.8.0';
+const APP_VERSION = '0.8.1';
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             populateFilters();
             restoreFilterState();
             filterSongs();
+            restoreSongFromUrl();
 
             const cachedTimestamp = localStorage.getItem('songsDataTimestamp');
             const cacheAge = cachedTimestamp ? Date.now() - parseInt(cachedTimestamp) : 0;
@@ -235,6 +236,17 @@ function showSongViewContainer() {
 window.addEventListener('popstate', () => {
     if (location.hash !== '#song') {
         exitSongView(); // defined in song.js
+        return;
+    }
+    // Still a song entry - could be a *different* song landed on by
+    // stepping back/forward through a chain of suggestion jumps (each
+    // openSong() call pushes its own entry). Re-sync the view if so.
+    const params = new URLSearchParams(location.search);
+    const songName = params.get('s');
+    const interpret = params.get('i');
+    const song = allSongs.find(s => s.songName === songName && (!interpret || s.interpret === interpret));
+    if (song && song !== currentSong) { // currentSong defined in song.js
+        enterSongView(song); // defined in song.js
     }
 });
 
@@ -606,7 +618,40 @@ async function displaySongs(songs) {
 
 function openSong(index) {
     const song = allSongs[index];
-    history.pushState({ view: 'song' }, '', '#song');
+    history.pushState({ view: 'song' }, '', songUrl(song));
+    enterSongView(song); // defined in song.js
+}
+
+// i=/s= identify the open song in the URL so a phone refresh mid-song
+// (e.g. after losing/regaining signal) lands back on it instead of the
+// library - see restoreSongFromUrl() below and exitSongView() in song.js,
+// which strips them back off when the song view closes.
+function songUrl(song) {
+    const params = new URLSearchParams();
+    if (song.interpret) params.set('i', song.interpret);
+    if (song.songName) params.set('s', song.songName);
+    const query = params.toString();
+    return `${query ? '?' + query : ''}#song`;
+}
+
+let restoredSongFromUrl = false; // only ever act on the page's initial URL, once
+
+function restoreSongFromUrl() {
+    if (restoredSongFromUrl) return;
+    restoredSongFromUrl = true;
+
+    const params = new URLSearchParams(window.location.search);
+    const songName = params.get('s');
+    if (!songName) return;
+    const interpret = params.get('i');
+
+    const song = allSongs.find(s => s.songName === songName && (!interpret || s.interpret === interpret));
+    if (!song) return;
+
+    // The URL already has the right query/hash (it came from the page
+    // load itself, e.g. a refresh) - enter the song view directly rather
+    // than through openSong(), which would push a redundant history entry.
+    history.replaceState({ view: 'song' }, '', songUrl(song));
     enterSongView(song); // defined in song.js
 }
 
@@ -624,6 +669,7 @@ async function loadFromGoogleSheets() {
         const jsonData = parseCSV(csvText);
 
         processSongsData(jsonData);
+        restoreSongFromUrl();
         document.getElementById('fileStatus').textContent = `✓ ${jsonData.length} songs loaded from Google Sheets`;
 
     } catch (error) {
@@ -787,6 +833,7 @@ function loadSavedData() {
             allSongs = [...songsData];
             populateFilters();
             displaySongs(songsData);
+            restoreSongFromUrl();
             document.getElementById('fileStatus').textContent = `✓ ${songsData.length} songs loaded (cached)`;
         } catch (error) {
             console.error('Error loading saved data:', error);

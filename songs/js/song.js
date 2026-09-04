@@ -23,8 +23,12 @@ document.addEventListener('DOMContentLoaded', setupSongEventListeners);
 
 function setupSongEventListeners() {
     document.getElementById('backBtn').addEventListener('click', () => {
+        // Capture this before exitSongView() rewrites the URL, so the
+        // decision to actually step the browser history back is based on
+        // where we came from, not the just-cleaned URL.
+        const cameFromPush = location.hash === '#song';
         exitSongView();
-        if (location.hash === '#song') {
+        if (cameFromPush) {
             history.back();
         }
     });
@@ -107,6 +111,13 @@ function enterSongView(song) {
 function exitSongView() {
     clearTimeout(autoStartTimer);
     stopGesture();
+    // Drop the i=/s= query params (see songUrl() in app.js) now that no
+    // song is open. Safe to call unconditionally: if this run via popstate
+    // the browser already navigated the URL to a clean one, so this is a
+    // no-op; if run from the back button, it replaces the current (still
+    // song-tagged) entry before the caller decides whether to also step
+    // the actual history back.
+    history.replaceState({}, '', window.location.pathname);
     showLibraryView(); // defined in app.js
 }
 
