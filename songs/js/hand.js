@@ -142,7 +142,7 @@ function processGesture(gesture) {
     
     // Check if this is a navigation gesture
     const isNext = gesture === '🤙 Call Me';
-    const isPrevious = gesture === '4 fingers';
+    const isPrevious = gesture === '✋ Four Fingers';
     
     if (isNext || isPrevious) {
         // If this gesture is different from what we last processed, execute action

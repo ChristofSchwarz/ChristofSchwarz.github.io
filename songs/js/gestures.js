@@ -99,6 +99,16 @@ function detectHandGesture(landmarks) {
         return '👍/👎 Thumb';
     }
 
+    // Four fingers, thumb tucked - previous section. A dedicated check
+    // (rather than falling through to the generic "N fingers" label below)
+    // so it's as reliable on stage as "Call Me" - the old fallback could
+    // misfire on any pose that happened to leave exactly 4 of the 5 tracked
+    // parts extended, e.g. a loosely-held open palm whose thumb read as
+    // curled, or three fingers plus a thumb that read as extended.
+    if (!extended.thumb && extended.index && extended.middle && extended.ring && extended.pinky) {
+        return '✋ Four Fingers';
+    }
+
     // Open palm - all fingers extended and spread
     if (fingerCount === 5) {
         const pinkyTip = landmarks[20];

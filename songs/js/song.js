@@ -17,6 +17,13 @@ let lastProcessedGesture = null;
 let lastActionTime = 0;
 const ACTION_COOLDOWN = 700; // ms - matches hand.html's practice tool
 
+// Once the automatic per-song camera request has failed (e.g. permission
+// denied), stop retrying it on every song open - that turned a single
+// denial into a blocking alert() on every lyrics page for the rest of the
+// session. An explicit tap on the camera button (toggleCameraAndGesture)
+// still retries and reports errors, since that's a deliberate user action.
+let cameraAutoStartFailed = false;
+
 // Listeners are attached once - the song view is shown/hidden in place,
 // it never reloads, so re-attaching on every song would stack duplicates.
 document.addEventListener('DOMContentLoaded', setupSongEventListeners);
@@ -103,9 +110,11 @@ function enterSongView(song) {
     // Auto-start gesture control shortly after opening, so both hands can
     // stay on the instrument from the moment the song is up.
     clearTimeout(autoStartTimer);
-    autoStartTimer = setTimeout(() => {
-        startGesture();
-    }, 500);
+    if (!cameraAutoStartFailed) {
+        autoStartTimer = setTimeout(() => {
+            startGesture({ silent: true });
+        }, 500);
+    }
 }
 
 function exitSongView() {
@@ -522,7 +531,7 @@ function toggleSongMenu() {
     menuPanel.style.display = menuPanel.style.display === 'none' ? 'block' : 'none';
 }
 
-async function startGesture() {
+async function startGesture({ silent = false } = {}) {
     if (gestureEnabled) return;
 
     try {
@@ -555,6 +564,7 @@ async function startGesture() {
         await videoElement.play().catch(() => {}); // iOS sometimes needs an explicit play() after re-attaching a stream
 
         gestureEnabled = true;
+        cameraAutoStartFailed = false;
         document.getElementById('gestureStatus').textContent = '✋';
 
         // Drive Hands with our own frame loop rather than MediaPipe's
@@ -568,7 +578,8 @@ async function startGesture() {
         handsFrameLoopId = requestAnimationFrame(pumpFrame);
 
     } catch (error) {
-        alert('Error accessing camera: ' + error.message);
+        cameraAutoStartFailed = true;
+        if (!silent) alert('Error accessing camera: ' + error.message);
         stopGesture();
     }
 }
@@ -594,7 +605,7 @@ function processGesture(gesture) {
     if (now - lastActionTime < ACTION_COOLDOWN) return;
 
     const isNext = gesture === '🤙 Call Me';
-    const isPrevious = gesture === '4 fingers';
+    const isPrevious = gesture === '✋ Four Fingers';
     if (!isNext && !isPrevious) {
         if (currentGesture !== lastProcessedGesture) lastProcessedGesture = null;
         return;

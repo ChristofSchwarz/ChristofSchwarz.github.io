@@ -11,7 +11,7 @@ const FALLBACK_GOOGLE_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/1nJVZ
 
 // Bumped on every publish - see the "Versioning" section in CLAUDE.md for
 // the policy (patch by default, ask before minor/major).
-const APP_VERSION = '0.8.1';
+const APP_VERSION = '0.8.2';
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
